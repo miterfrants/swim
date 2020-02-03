@@ -1,11 +1,39 @@
 {
-  "name": "swim",
-  "version": "1.0.0",
+  "_from": "git+https://github.com/miterfrants/swim.git",
+  "_id": "swim@1.0.0",
+  "_inBundle": false,
+  "_integrity": "",
+  "_location": "/swim",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "git",
+    "raw": "https://github.com/miterfrants/swim.git",
+    "rawSpec": "https://github.com/miterfrants/swim.git",
+    "saveSpec": "git+https://github.com/miterfrants/swim.git",
+    "fetchSpec": "https://github.com/miterfrants/swim.git",
+    "gitCommittish": null
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "git+https://github.com/miterfrants/swim.git#45af94175cce1efe5d7d622b99360a55d539c77e",
+  "_spec": "https://github.com/miterfrants/swim.git",
+  "_where": "/Users/huangpo-hsiang/project/swim-demo",
+  "author": {
+    "name": "Peter Huang"
+  },
+  "bundleDependencies": false,
+  "deprecated": false,
   "description": "",
+  "license": "ISC",
   "main": "generate-project-structure.js",
+  "name": "swim",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Peter Huang",
-  "license": "ISC"
+  "version": "1.0.0",
+  "dependencies": {
+    "node-static-alias": "^1.1.2"
+  }
 }

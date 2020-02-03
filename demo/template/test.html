@@ -1,0 +1,85 @@
+<div class="routing-controller" style="padding: 20px;">
+    <style>
+        h1 {
+            margin-top: 20px;
+        }
+
+        .topic {
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ccc;
+        }
+    </style>
+
+    <div class="topic">
+        <h1>No Value Attribute Test</h1>
+        <input value="{noValueAttr1}" onkeyup="controller.updateNoValueAttr1" type="text" />
+        <input value="{noValueAttr2}" onkeyup="controller.updateNoValueAttr2" type="text" />
+        <div {noValueAttr1} {noValueAttr2}>no value attribute test</div>
+    </div>
+
+    <div class="topic">
+        <h1>Attribute Value Test</h1>
+        <input value="{attrValue1}" onkeyup="controller.updateAttrValue1" type="text" />
+        <input value="{attrValue2}" onkeyup="controller.updateAttrValue2" type="text" />
+        <div class="{attrValue1} {attrValue2}">has value attribute test</div>
+    </div>
+
+    <div class="topic">
+        <h1>TextNode Test</h1>
+        <input value="{textNode}" onkeyup="controller.updateTextNode" type="text" />
+        <div>{textNode}</div>
+    </div>
+
+    <div class="topic">
+        <h1>No Value Attribute Test In Component</h1>
+        <input value="{noValueAttrInComponent1}" onkeyup="controller.updateNoValueAttrInComponent1" type="text" />
+        <input value="{noValueAttrInComponent2}" onkeyup="controller.updateNoValueAttrInComponent2" type="text" />
+        <component-test-no-value-attribute variable="noValueAttrInComponent1,noValueAttrInComponent2">
+        </component-test-no-value-attribute>
+    </div>
+
+    <div class="topic">
+        <h1>Has Value Attribute Test In Component</h1>
+        <input value="{attrValueInComponent1}" onkeyup="controller.updateAttrValueInComponent1" type="text" />
+        <input value="{attrValueInComponent2}" onkeyup="controller.updateAttrValueInComponent2" type="text" />
+        <component-test-attr-value variable="attrValueInComponent1,attrValueInComponent2">
+        </component-test-attr-value>
+    </div>
+
+    <div class="topic">
+        <h1>One Variable Binding Twice</h1>
+        <input value="{bindingTwiceVariable}" onkeyup="controller.updateBindingTwice" type="text" />
+        <input value="{bindingTwiceVariable}" type="text" />
+        <input value="{bindingTwiceVariable}" type="text" />
+        <div>{bindingTwiceVariable}</div>
+    </div>
+
+    <div class="topic">
+        <h1>One Variable Binding Twice In Component And Swim For</h1>
+        <input value="{bindingTwiceInComponentAndSwimFor}" onkeyup="controller.updateBindingTwiceInComponentAndSwimFor"
+            type="text" />
+        <div>Test in same controller: {bindingTwiceInComponentAndSwimFor}</div>
+        <component-test-binding-twice-and-swim-for variable="bindingTwiceInComponentAndSwimFor">
+        </component-test-binding-twice-and-swim-for>
+    </div>
+
+    <div class="topic">
+        <h1>Swim For Component (not work)</h1>
+        <input value="{swimForComponent}" onkeyup="controller.updateSwimForComponent" type="text" />
+        <div>Test in same controller: {swimForComponent}</div>
+        <div swim-for="listForSwimFor">
+            <div>
+                <div>name: {name}</div>
+                <component-test-swim-for variable="swimForComponent">
+                </component-test-swim-for>
+            </div>
+        </div>
+        <button onclick="controller.appendItemToListForSwimFor">append item to listForSwimFor</button>
+    </div>
+
+    <div class="topic">
+        <h1>Recursive Component</h1>
+        <input value="{testRecursiveOneLevel}" onkeyup="controller.updateTestRecursiveOneLevel" />
+        <component-test-recursive-one-level variable="testRecursiveOneLevel"></component-test-recursive-one-level>
+    </div>
+</div>

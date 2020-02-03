@@ -1,0 +1,11 @@
+<div class="test-binding-twice-and-swim-for">
+    <div>Testing in component: {bindingTwiceInComponentAndSwimFor}</div>
+    <h2>Testing in swim for</h2>
+    <div swim-for="list">
+        <div>
+            <span>{name}</span>
+            <span>{bindingTwiceInComponentAndSwimFor}</span>
+        </div>
+    </div>
+    <button onclick="controller.appendNewItemToList" style="margin-top: 20px;">append list new item</button>
+</div>
