@@ -1,0 +1,376 @@
+import {
+    Loader
+} from '/swim/loader.js';
+
+import {
+    RoutingRule
+} from '/swim/routing-rule.js';
+
+window['SwimAppController'] = [];
+window['SwimAppControllersAndArgsMapping'] = {};
+window['SwimAppCurrentController'] = null;
+window['SwimAppStylesheet'] = window['SwimAppStylesheet'] || [];
+window['SwimAppPreviousState'] = [];
+
+export const Router = {
+    init: (context) => {
+        window.addEventListener('popstate', async () => {
+            const newPath = location.pathname + location.search;
+            const exitResult = await Router.exit(window.AppPreviousState, newPath, RoutingRule, context);
+            if (exitResult) {
+                Router.routing(window.AppPreviousState, newPath, RoutingRule, context);
+                window.AppPreviousState = newPath; // eslint-disable-line
+            } else {
+                history.go(1);
+            }
+        });
+
+        (function (original) {
+            history.pushState = async function (data, title, newPath) {
+                const exitResult = await Router.exit(location.pathname + location.search, newPath, RoutingRule, context);
+                if (exitResult) {
+                    window.AppPreviousState = newPath;
+                    Router.routing(location.pathname + location.search, newPath, RoutingRule, context);
+                    return original.apply(this, arguments);
+                }
+            };
+        })(history.pushState);
+
+        (function (original) {
+            history.replaceState = async function (data, title, newPath) {
+                const exitResult = await Router.exit(location.pathname + location.search, newPath, RoutingRule, context);
+                if (exitResult) {
+                    window.AppPreviousState = newPath;
+                    Router.routing(location.pathname + location.search, newPath, RoutingRule, context);
+                    return original.apply(this, arguments);
+                }
+            };
+        })(history.replaceState);
+
+        Router.routing('', location.pathname + location.search, RoutingRule, context);
+        window.AppPreviousState = location.pathname + location.search;
+
+        // overwrite link tag original behavior
+        document.querySelectorAll('a').forEach((el) => {
+            el.addEventListener('click', overWriteLinkBehavior);
+        });
+
+        document.addEventListener('DOMNodeInserted', (e) => {
+            if (e.target.tagName === 'A') {
+                const htmlElement = e.target;
+                htmlElement.addEventListener('click', overWriteLinkBehavior);
+            } else if (e.target.querySelectorAll && e.target.querySelectorAll('a').length > 0) {
+                e.target.querySelectorAll('a').forEach((el) => {
+                    el.addEventListener('click', overWriteLinkBehavior);
+                });
+            }
+        });
+
+        function overWriteLinkBehavior(e) {
+            if (e.currentTarget.target === '_blank') {
+                return;
+            }
+            if (e.currentTarget.href.indexOf(location.origin) !== -1) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (e.currentTarget && e.currentTarget.href) {
+                    if (e.currentTarget.href.indexOf(location.origin) === -1) {
+                        return;
+                    }
+                }
+                const newPath = e.currentTarget.href.replace(location.origin, '');
+                let originPath = location.pathname;
+                if (location.search) {
+                    originPath += location.search;
+                }
+                if (`${originPath}#` === newPath) {
+                    return;
+                }
+                history.pushState({}, '', newPath);
+                return;
+            }
+
+        }
+    },
+    exit: async (previousPath, path, routers, context) => {
+        let currentRoutingPathArray = Router.getRoutingPathArray(path, routers);
+        let previousRoutingPathArray = Router.getRoutingPathArray(previousPath, routers);
+
+        // should be exit controller
+        let differenceRoutinPathFromPrevious = previousRoutingPathArray.filter((routingPath) => {
+            for (let i = 0; i < currentRoutingPathArray.length; i++) {
+                if (routingPath.pathFragment === currentRoutingPathArray[i].pathFragment) {
+                    return false;
+                }
+            }
+            return true;
+        });
+        differenceRoutinPathFromPrevious = differenceRoutinPathFromPrevious.reverse();
+        for (let i = 0; i < differenceRoutinPathFromPrevious.length; i++) {
+            const controllerInstance = Router.findControllerInstance(differenceRoutinPathFromPrevious[i].matchRoutingRule.controller);
+            if (!controllerInstance) {
+                continue;
+            }
+            const result = await controllerInstance.exit();
+            if (!result) {
+                return false;
+            }
+            clearContextArgs(context.args, differenceRoutinPathFromPrevious[i].matchRoutingRule.controller.name);
+        }
+        return true;
+    },
+    routing: async (previousPath, path, routers, context) => {
+        if (!context.args) {
+            context.args = {};
+        }
+        let currentRoutingPathArray = Router.getRoutingPathArray(path, routers);
+        let previousRoutingPathArray = Router.getRoutingPathArray(previousPath, routers);
+
+        // should be enter controller
+        let firstTimeDiffIndex = -1;
+        const differenceRoutinPathFromCurrent = currentRoutingPathArray.filter((routingPath, index) => {
+            if (firstTimeDiffIndex !== -1 && index > firstTimeDiffIndex) {
+                return true;
+            }
+            for (let i = 0; i < previousRoutingPathArray.length; i++) {
+                if (routingPath.pathFragment === previousRoutingPathArray[i].pathFragment) {
+                    return false;
+                }
+            }
+            firstTimeDiffIndex = index;
+            return true;
+        });
+        // edge case: child routing rule to parent routing rule 
+        if (
+            differenceRoutinPathFromCurrent.length === 0 &&
+            previousPath !== path
+        ) {
+            differenceRoutinPathFromCurrent.push(currentRoutingPathArray[currentRoutingPathArray.length - 1]);
+        }
+
+        for (let i = 0; i < differenceRoutinPathFromCurrent.length; i++) {
+            const routingPath = differenceRoutinPathFromCurrent[i];
+            const pathFragment = routingPath.pathFragment;
+            const regexp = routingPath.regexp;
+            const routingRule = routingPath.matchRoutingRule;
+
+            // get parent controller
+            const currentRoutingPathIndex = currentRoutingPathArray.indexOf(routingPath);
+            const parentController = currentRoutingPathIndex == 0 ? null : currentRoutingPathArray[currentRoutingPathIndex - 1].matchRoutingRule.controller;
+            const parentControllerInstance = Router.findControllerInstance(parentController);
+
+            // prepare context args from url
+            const variableFromURL = Router.extractVariableFromUrl(routingRule.path, pathFragment, regexp);
+            setupContextArgs(context.args, variableFromURL, routingRule.controller.name);
+
+            // prepare context args from routing rule
+            let somethingWrongInPrepareData = false;
+
+            if (routingRule.prepareData) {
+                const result = await Router.prepareData(routingRule.prepareData, context.args);
+                somethingWrongInPrepareData = result.somethingWrongInPrepareData;
+                setupContextArgs(context.args, result.data, routingRule.controller.name);
+            }
+
+            if (somethingWrongInPrepareData) {
+                console.warn(`something wrong in ${routingRule.controller.name} prepare data$`);
+            }
+
+            // load dependency
+            if (!context.isServerSideRender) {
+                const loader = new Loader();
+                if (routingRule.dependency) {
+                    await loader.load(routingRule.dependency);
+                }
+            }
+
+            // execute controller
+            let htmlPath = null;
+            if (routingRule.html) {
+                htmlPath = routingRule.html;
+            }
+            await Router.executeController(routingRule.controller, context, htmlPath, parentControllerInstance);
+        }
+        document.querySelectorAll('.child-router').forEach((el) => {
+            el.style.visibility = '';
+        });
+        context.isUpdateDOMFirstRunRouting = true; // eslint-disable-line
+    },
+    findMatchRoute: (currentPath, routers) => {
+        for (let i = 0; i < routers.length; i++) {
+            const path = routers[i].path;
+            const isEnd = routers[i].children === undefined;
+            const regexp = Router.buildRegExp(path, isEnd);
+            if (regexp.test(currentPath)) {
+                return routers[i];
+            }
+        }
+    },
+    findControllerInstance: (type) => {
+        if (!type) {
+            return null;
+        }
+        return window.SwimAppController.filter((instance) => {
+            return instance instanceof type;
+        })[0];
+    },
+    // server side: constructor -> render
+    // client side first time: constructor -> enter -> render -> postRender -> exit
+    // client side seconds time: enter -> render -> postRender -> exit
+    executeController: async (controller, context, htmlPath, parentController, skipControllerLiveTimeCycle) => {
+        // 如果已經有 instance 就不要在執行 initalize
+        const instances = window.SwimAppController.filter((instance) => {
+            return instance instanceof controller;
+        });
+
+        let controllerInstance = null;
+        let elHTML = null;
+        if (instances.length === 0) {
+            if (htmlPath) {
+                let loader = new Loader();
+                const html = await loader.loadHTML(htmlPath);
+                elHTML = html.toDom();
+            }
+            controllerInstance = new controller(elHTML, parentController, context.args, context);
+            window.SwimAppController.push(controllerInstance);
+        } else {
+            controllerInstance = instances[0];
+        }
+        window.AppCurrentController = controllerInstance; // eslint-disable-line
+        if (!skipControllerLiveTimeCycle) {
+            if (!context.isServerSideRender) { // client side only
+                // client side every time enter router
+                await controllerInstance.enter(context.args);
+                if (controllerInstance.render && context.isUpdateDOMFirstRunRouting) {
+                    await controllerInstance.render();
+                }
+                if (controllerInstance.postRender) {
+                    await controllerInstance.postRender();
+                }
+            } else if (controllerInstance.render) {
+                await controllerInstance.render(true);
+            }
+        }
+
+        return controllerInstance;
+    },
+    prepareData: (prepareFuncs, args) => {
+        return new Promise(async (resolve) => { // eslint-disable-line
+            let somethingWrongInPrepareData = false;
+            const data = {};
+            const tempArgs = {
+                ...args
+            };
+            for (let i = 0; i < prepareFuncs.length; i++) {
+                const prepareData = await prepareFuncs[i].func(tempArgs);
+                if (prepareData === null || prepareData === undefined) {
+                    somethingWrongInPrepareData = true;
+                }
+                const key = prepareFuncs[i].key;
+                tempArgs[key] = prepareData;
+                data[key] = prepareData;
+            }
+            resolve({
+                somethingWrongInPrepareData,
+                data
+            });
+        });
+    },
+    buildRegExp: (path, isEnd) => {
+        const arrayOfPath = path.split('?')[0].split('/');
+        const arrayRegString = [];
+        const arrayUrlParams = [];
+        for (let j = 0; j < arrayOfPath.length; j++) {
+            if (arrayOfPath[j].substring(0, 1) === '{') {
+                arrayUrlParams.push(arrayOfPath[j].replace(/{/gi, '').replace(/}/gi, ''));
+                arrayRegString.push('([0-9|a-z|A-Z|_|-|{|}]+)');
+            } else {
+                arrayRegString.push(arrayOfPath[j]);
+            }
+        }
+        if (isEnd) {
+            return new RegExp('^' + arrayRegString.join('\\/') + '(\\?.*)?$');
+        } else {
+            return new RegExp('^' + arrayRegString.join('\\/'));
+        }
+    },
+    extractVariableFromUrl: (routingPath, currentPath, regexp) => {
+        const arrayRoutingPath = routingPath.split('?');
+        routingPath = arrayRoutingPath[0];
+        const keys = routingPath.match(regexp);
+        const values = Array.isArray(currentPath) ? currentPath.join('/').match(regexp) : currentPath.match(regexp);
+        const args = {};
+        if (keys !== undefined && keys.length > 1 && keys.length === values.length) {
+
+            for (let j = 1; j < keys.length; j++) {
+                if (keys[j] === undefined) {
+                    continue;
+                }
+                const key = keys[j].replace(/{/gi, '').replace(/}/gi, '');
+                const value = values[j];
+                args[key] = value;
+            }
+        }
+        // 怎麼記得 location.search -> currentPath 現在好像又改回 currentPath;
+        if (location.search !== '?' && currentPath.indexOf('?') === -1) {
+            currentPath += location.search;
+        }
+        if (arrayRoutingPath.length === 2 && currentPath.indexOf('?') !== -1) {
+            const arrayQueryStringFromRouting = arrayRoutingPath[1].split('&');
+            const arrayQueryStringFromCurrentPath = currentPath.split('?')[1].split('&');
+            for (let i = 0; i < arrayQueryStringFromRouting.length; i++) {
+                for (let j = 0; j < arrayQueryStringFromCurrentPath.length; j++) {
+                    if (arrayQueryStringFromCurrentPath[j].indexOf(arrayQueryStringFromRouting[i] + '=') !== -1) {
+                        const queryKey = arrayQueryStringFromRouting[i];
+                        const queryValue = arrayQueryStringFromCurrentPath[j].split('=')[1];
+                        args[queryKey] = queryValue;
+                    }
+                }
+            }
+        }
+        return args;
+    },
+    getRoutingPathArray: (path, routingRules) => {
+        const results = [];
+        let currentPath = path;
+        let currentRoutingRules = routingRules;
+        let isEnd = path.length > 0 ? false : true;
+        while (!isEnd) {
+            let matchRoutingRule = Router.findMatchRoute(currentPath, currentRoutingRules);
+            let regexp = Router.buildRegExp(matchRoutingRule.path, isEnd);
+            isEnd = matchRoutingRule.children === undefined || currentPath.split('?')[0].replace(regexp, '').length === 0;
+            // re-generate regexp
+            if (isEnd) {
+                regexp = Router.buildRegExp(matchRoutingRule.path, isEnd);
+            }
+            results.push({
+                pathFragment: currentPath.match(regexp)[0],
+                matchRoutingRule,
+                regexp
+            });
+            currentRoutingRules = matchRoutingRule.children;
+            currentPath = currentPath.replace(regexp, '');
+        }
+        return results;
+    }
+};
+
+function setupContextArgs(argsReference, args, controllerName) {
+    if (!window.SwimAppControllersAndArgsMapping[controllerName]) {
+        window.SwimAppControllersAndArgsMapping[controllerName] = [];
+    }
+    for (const key in args) {
+        argsReference[key] = args[key];
+        if (window.SwimAppControllersAndArgsMapping[controllerName].indexOf(key) === -1) {
+            window.SwimAppControllersAndArgsMapping[controllerName].push(key);
+        }
+    }
+}
+
+function clearContextArgs(argsReference, controllerName) {
+    const controllerArgs = window.SwimAppControllersAndArgsMapping[controllerName];
+    for (let i = 0; i < controllerArgs.length; i++) {
+        let key = controllerArgs[i];
+        delete argsReference[key];
+    }
+}
