@@ -12,6 +12,6 @@
 # NPM Scripts
 1. add scripts in package.json
 ```
-    "update-swim-core": "npm install https://github.com/miterfrants/swim.git && node node_modules/swim/auto-script/update-core.js",
-    "initial-swim-project": "node node_modules/swim/auto-script/generate-project-structure.js"
+"update-swim-core": "npm install https://github.com/miterfrants/swim.git && node node_modules/swim/auto-script/update-core.js",
+"initial-swim-project": "node node_modules/swim/auto-script/generate-project-structure.js"
 ```
