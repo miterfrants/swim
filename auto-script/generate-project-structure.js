@@ -1,6 +1,6 @@
 const fs = require('fs-extra');
 
-const copySwimCoreModule = require('swim/auto-script/copy-swim-core');
+const copySwimCoreModule = require('swim/auto-script/scripts/copy-swim-core');
 copySwimCoreModule.copySwimCore();
 
 fs.copyFileSync('node_modules/swim/demo/routing-rule.js', 'swim/routing-rule.js');
