@@ -115,7 +115,7 @@ export const Router = {
             if (!result) {
                 return false;
             }
-            clearContextArgs(context.args, differenceRoutinPathFromPrevious[i].matchRoutingRule.controller.name);
+            clearContextArgs(context.args, differenceRoutinPathFromPrevious[i].matchRoutingRule.controller.id);
         }
         return true;
     },
@@ -147,7 +147,6 @@ export const Router = {
         ) {
             differenceRoutinPathFromCurrent.push(currentRoutingPathArray[currentRoutingPathArray.length - 1]);
         }
-
         for (let i = 0; i < differenceRoutinPathFromCurrent.length; i++) {
             const routingPath = differenceRoutinPathFromCurrent[i];
             const pathFragment = routingPath.pathFragment;
@@ -161,7 +160,7 @@ export const Router = {
 
             // prepare context args from url
             const variableFromURL = Router.extractVariableFromUrl(routingRule.path, pathFragment, regexp);
-            setupContextArgs(context.args, variableFromURL, routingRule.controller.name);
+            setupContextArgs(context.args, variableFromURL, routingRule.controller.id);
 
             // prepare context args from routing rule
             let somethingWrongInPrepareData = false;
@@ -169,11 +168,11 @@ export const Router = {
             if (routingRule.prepareData) {
                 const result = await Router.prepareData(routingRule.prepareData, context.args);
                 somethingWrongInPrepareData = result.somethingWrongInPrepareData;
-                setupContextArgs(context.args, result.data, routingRule.controller.name);
+                setupContextArgs(context.args, result.data, routingRule.controller.id);
             }
 
             if (somethingWrongInPrepareData) {
-                console.warn(`something wrong in ${routingRule.controller.name} prepare data$`);
+                console.warn(`something wrong in ${routingRule.controller.id} prepare data$`);
             }
 
             // load dependency
@@ -355,20 +354,20 @@ export const Router = {
     }
 };
 
-function setupContextArgs(argsReference, args, controllerName) {
-    if (!window.SwimAppControllersAndArgsMapping[controllerName]) {
-        window.SwimAppControllersAndArgsMapping[controllerName] = [];
+function setupContextArgs(argsReference, args, controllerId) {
+    if (!window.SwimAppControllersAndArgsMapping[controllerId]) {
+        window.SwimAppControllersAndArgsMapping[controllerId] = [];
     }
     for (const key in args) {
         argsReference[key] = args[key];
-        if (window.SwimAppControllersAndArgsMapping[controllerName].indexOf(key) === -1) {
-            window.SwimAppControllersAndArgsMapping[controllerName].push(key);
+        if (window.SwimAppControllersAndArgsMapping[controllerId].indexOf(key) === -1) {
+            window.SwimAppControllersAndArgsMapping[controllerId].push(key);
         }
     }
 }
 
-function clearContextArgs(argsReference, controllerName) {
-    const controllerArgs = window.SwimAppControllersAndArgsMapping[controllerName];
+function clearContextArgs(argsReference, controllerId) {
+    const controllerArgs = window.SwimAppControllersAndArgsMapping[controllerId];
     for (let i = 0; i < controllerArgs.length; i++) {
         let key = controllerArgs[i];
         delete argsReference[key];

@@ -24,13 +24,12 @@ export const Render = {
                 }
                 let componentClass;
                 try {
-                    if (window.SwimAppComponents[componentInfo.moduleName]) {
+                    if (window.SwimAppComponents && window.SwimAppComponents[componentInfo.moduleName]) {
                         componentClass = window.SwimAppComponents[componentInfo.moduleName];
                     } else {
                         const loader = new Loader();
                         componentClass = await loader.loadJS(componentInfo.url, componentInfo.moduleName);
                     }
-
                 } catch (error) {
                     console.error(`${componentInfo.moduleName} module name wrong`);
                 }

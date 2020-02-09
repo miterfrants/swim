@@ -1,5 +1,10 @@
 const fs = require('fs-extra');
-const components = fs.readdirSync('./src/components');
+const components = fs.readdirSync('./src/components', {
+    withFileTypes: true
+}).filter(dir => dir.isDirectory()).map((dir) => {
+    return dir.name;
+});
+
 const template = fs.readdirSync('./src/template');
 
 const componentTemplate = `import {
@@ -37,7 +42,7 @@ for (let i = 0; i < components.length; i++) {
 }
 
 for (let i = 0; i < template.length; i++) {
-    const fileNameWithoutExtend = template[i].split('.')[0];
+    const fileNameWithoutExtend = snakeToCamel(template[i].split('.')[0]);
     importResult.push(`import ${fileNameWithoutExtend}HTML from '../template/${template[i]}';\r\n`);
     cacheResult.push(`        window.SwimAppLoaderCache['/template/${template[i]}'] = ${fileNameWithoutExtend}HTML;`);
 }
