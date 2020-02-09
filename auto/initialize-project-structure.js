@@ -12,7 +12,7 @@ if (!fs.existsSync('dist')) {
 require('./update-core.js');
 
 const package = fs.readJSONSync('package.json');
-package.scripts['swim-update'] = 'npm install https://github.com/miterfrants/swim.git node node_modules/swim/auto/update-core.js';
+package.scripts['swim-update'] = 'npm install https://github.com/miterfrants/swim.git && node node_modules/swim/auto/update-core.js';
 package.scripts['swim-init'] = 'node node_modules/swim/auto/initialize-project-structure.js';
 package.scripts['swim-build'] = 'node node_modules/swim/auto/cacher-for-webpack.js && npx webpack --config ./src/webpack.config.js';
 fs.writeJSONSync('package.json', package, {
