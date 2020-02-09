@@ -17,24 +17,24 @@
     "#USER",
     "/"
   ],
-  "_resolved": "git+https://github.com/miterfrants/swim.git#45af94175cce1efe5d7d622b99360a55d539c77e",
+  "_resolved": "git+https://github.com/miterfrants/swim.git#b8c44c4a29316f7652ffecd9a0d7f04ab0c49d39",
   "_spec": "https://github.com/miterfrants/swim.git",
   "_where": "/Users/huangpo-hsiang/project/swim-demo",
   "author": {
     "name": "Peter Huang"
   },
   "bundleDependencies": false,
+  "dependencies": {
+    "fs-extra": "^8.1.0",
+    "node-static-alias": "^1.1.2"
+  },
   "deprecated": false,
-  "description": "",
+  "description": "1. `npm install https://github.com/miterfrants/swim.git` 2. `node node_modules/swim/auto-script/generate-project-structure.js`",
   "license": "ISC",
   "main": "generate-project-structure.js",
   "name": "swim",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "version": "1.0.0",
-  "dependencies": {
-    "fs-extra": "^8.1.0",
-    "node-static-alias": "^1.1.2"
-  }
+  "version": "1.0.0"
 }

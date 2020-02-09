@@ -1,17 +1,17 @@
 import {
     ApiHelper
-} from '/util/api.js';
+} from '../util/api.js';
 
 import {
     API
-} from '/constants.js';
+} from '../constants.js';
 
 import {
     APP_CONFIG
-} from '/config.js';
+} from '../config.js';
 import {
     Swissknife
-} from '/util/swissknife.js';
+} from '../util/swissknife.js';
 
 export const TestDataService = {
     getOne: async (data) => {

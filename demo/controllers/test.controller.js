@@ -1,15 +1,15 @@
 import {
     RoutingController
-} from '/swim/routing-controller.js';
+} from '../swim/routing-controller.js';
 import {
     TestDataService
-} from '/dataservices/test.dataservice.js';
+} from '../dataservices/test.dataservice.js';
 import {
     RESPONSE_STATUS
-} from '/constants.js';
+} from '../constants.js';
 import {
     Toaster
-} from '/util/toaster.js';
+} from '../util/toaster.js';
 
 export class TestController extends RoutingController {
     constructor(elHTML, parentController, args, context) {

@@ -1,6 +1,6 @@
 import {
     TestController
-} from '/controllers/test.controller.js';
+} from './controllers/test.controller.js';
 
 export const RoutingRule = [{
     path: '/test/',

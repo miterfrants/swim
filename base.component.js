@@ -1,9 +1,9 @@
 import {
     Loader
-} from '/swim/loader.js';
+} from './loader.js';
 import {
     Render
-} from '/swim/render.js';
+} from './render.js';
 
 export class BaseComponent {
     constructor(elRoot, variable, args) {
@@ -17,7 +17,7 @@ export class BaseComponent {
     async render(variable) {
         this.variable = variable;
         // load html
-        let htmlFileName = this.camelToSnake(this.constructor.name.substring(0, this.constructor.name.toLowerCase().lastIndexOf('component')));
+        let htmlFileName = this.camelToSnake(this.id.substring(0, this.id.toLowerCase().lastIndexOf('component')));
         const loader = new Loader();
         const html = await loader.loadHTML(`/components/${htmlFileName}/${htmlFileName}.html`);
         this.template = html;

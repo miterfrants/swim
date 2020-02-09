@@ -1,10 +1,10 @@
 import {
     RESPONSE_STATUS
-} from '/constants.js';
+} from '../constants.js';
 import {
     CUSTOM_ERROR_TYPE,
     CustomError
-} from '/util/custom-error.js';
+} from './custom-error.js';
 
 if (!window['AppApiCache']) {
     window['AppApiCache'] = {};

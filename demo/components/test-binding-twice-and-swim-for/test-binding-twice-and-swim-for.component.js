@@ -1,10 +1,11 @@
 import {
     BaseComponent
-} from '/swim/base.component.js';
+} from '../../swim/base.component.js';
 
 export class TestBindingTwiceAndSwimForComponent extends BaseComponent {
     constructor(elRoot, variable, args) {
         super(elRoot, variable, args);
+        this.id = 'TestBindingTwiceAndSwimForComponent';
     }
 
     async render() {

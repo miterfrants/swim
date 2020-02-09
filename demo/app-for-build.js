@@ -16,6 +16,11 @@ import {
     Toaster
 } from './util/toaster.js';
 
+import {
+    Cacher
+} from './swim/cacher.js';
+
+Cacher.buildCache();
 extendStringProtoType();
 extendHTMLElementProtoType();
 
@@ -52,3 +57,4 @@ export const APP = {
         Router.init(APP);
     }
 };
+window.APP = APP;

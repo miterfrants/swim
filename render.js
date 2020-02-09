@@ -1,6 +1,6 @@
 import {
     Loader
-} from '/swim/loader.js';
+} from './loader.js';
 export const Render = {
     level: 0,
     debug: (info) => {
@@ -24,8 +24,13 @@ export const Render = {
                 }
                 let componentClass;
                 try {
-                    const loader = new Loader();
-                    componentClass = await loader.loadJS(componentInfo.url, componentInfo.moduleName);
+                    if (window.SwimAppComponents[componentInfo.moduleName]) {
+                        componentClass = window.SwimAppComponents[componentInfo.moduleName];
+                    } else {
+                        const loader = new Loader();
+                        componentClass = await loader.loadJS(componentInfo.url, componentInfo.moduleName);
+                    }
+
                 } catch (error) {
                     console.error(`${componentInfo.moduleName} module name wrong`);
                 }

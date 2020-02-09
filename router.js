@@ -1,10 +1,10 @@
 import {
     Loader
-} from '/swim/loader.js';
+} from './loader.js';
 
 import {
     RoutingRule
-} from '/swim/routing-rule.js';
+} from '../routing-rule.js';
 
 window['SwimAppController'] = [];
 window['SwimAppControllersAndArgsMapping'] = {};

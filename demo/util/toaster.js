@@ -1,7 +1,7 @@
 import {
     extendStringProtoType,
     extendHTMLElementProtoType
-} from '/util/extended-prototype.js';
+} from './extended-prototype.js';
 
 extendStringProtoType();
 extendHTMLElementProtoType();

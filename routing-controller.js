@@ -1,6 +1,6 @@
 import {
     Render
-} from '/swim/render.js';
+} from './render.js';
 
 export class RoutingController {
     constructor(elHTML, parentController, args, context) {
