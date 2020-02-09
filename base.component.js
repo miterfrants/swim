@@ -19,7 +19,8 @@ export class BaseComponent {
         // load html
         let htmlFileName = this.camelToSnake(this.id.substring(0, this.id.toLowerCase().lastIndexOf('component')));
         const loader = new Loader();
-        const html = await loader.loadHTML(`/components/${htmlFileName}/${htmlFileName}.html`);
+        let html = await loader.loadHTML(`/components/${htmlFileName}/${htmlFileName}.html`);
+        html = Render.removeLoadedStylesheet(html);
         this.template = html;
         this.elHTML = html.toDom();
         // bind variable and event listener
@@ -33,4 +34,6 @@ export class BaseComponent {
             return m[0] + '-' + m[1];
         }).toLowerCase();
     }
+
+
 }

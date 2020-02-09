@@ -6,6 +6,10 @@ import {
     RoutingRule
 } from '../routing-rule.js';
 
+import {
+    Render
+} from './render.js';
+
 window['SwimAppController'] = [];
 window['SwimAppControllersAndArgsMapping'] = {};
 window['SwimAppCurrentController'] = null;
@@ -147,6 +151,7 @@ export const Router = {
         ) {
             differenceRoutinPathFromCurrent.push(currentRoutingPathArray[currentRoutingPathArray.length - 1]);
         }
+
         for (let i = 0; i < differenceRoutinPathFromCurrent.length; i++) {
             const routingPath = differenceRoutinPathFromCurrent[i];
             const pathFragment = routingPath.pathFragment;
@@ -227,7 +232,8 @@ export const Router = {
         if (instances.length === 0) {
             if (htmlPath) {
                 let loader = new Loader();
-                const html = await loader.loadHTML(htmlPath);
+                let html = await loader.loadHTML(htmlPath);
+                html = Render.removeLoadedStylesheet(html);
                 elHTML = html.toDom();
             }
             controllerInstance = new controller(elHTML, parentController, context.args, context);

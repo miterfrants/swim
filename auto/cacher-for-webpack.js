@@ -6,11 +6,13 @@ const components = fs.readdirSync('./src/components', {
 });
 
 const template = fs.readdirSync('./src/template');
+const css = fs.readdirSync('./src/css').filter(filename => filename.endsWith('.css'));
 
 const componentTemplate = `import {
     {ComponentCamelCaseName}Component
 } from '../components/{ComponentSnakeCaseName}/{ComponentSnakeCaseName}.component.js';
 import {ComponentCamelCaseName}HTML from '../components/{ComponentSnakeCaseName}/{ComponentSnakeCaseName}.html';
+{css};
 `;
 const importResult = [];
 const cacheResult = [];
@@ -36,14 +38,27 @@ for (let i = 0; i < components.length; i++) {
     const componentSnakeCaseName = components[i];
     let componentCamelCaseName = snakeToCamel(componentSnakeCaseName);
     componentCamelCaseName = componentCamelCaseName.substring(0, 1).toUpperCase() + componentCamelCaseName.substring(1);
-    importResult.push(componentTemplate.replace(/{ComponentSnakeCaseName}/gi, componentSnakeCaseName).replace(/{ComponentCamelCaseName}/gi, componentCamelCaseName))
+    let componentResult = componentTemplate.replace(/{ComponentSnakeCaseName}/gi, componentSnakeCaseName).replace(/{ComponentCamelCaseName}/gi, componentCamelCaseName);
+    if (fs.existsSync(`./src/components/${componentSnakeCaseName}/${componentSnakeCaseName}.css`)) {
+        componentResult = componentResult.replace(/{css}/gi, `import '../components/${componentSnakeCaseName}/${componentSnakeCaseName}.css'`);
+        cacheResult.push(`        window.SwimAppStylesheet.push('/components/${componentSnakeCaseName}/${componentSnakeCaseName}.css');`);
+    } else {
+        componentResult = componentResult.replace(/{css}/gi, '');
+    }
+    importResult.push(componentResult);
+
     cacheResult.push(`        window.SwimAppComponents['${componentCamelCaseName}Component'] = ${componentCamelCaseName}Component;`);
     cacheResult.push(`        window.SwimAppLoaderCache['/components/${componentSnakeCaseName}/${componentSnakeCaseName}.html'] = ${componentCamelCaseName}HTML;`);
 }
 
 for (let i = 0; i < template.length; i++) {
     const fileNameWithoutExtend = snakeToCamel(template[i].split('.')[0]);
-    importResult.push(`import ${fileNameWithoutExtend}HTML from '../template/${template[i]}';\r\n`);
+    importResult.push(`import ${fileNameWithoutExtend}HTML from '../template/${template[i]}';\r`);
     cacheResult.push(`        window.SwimAppLoaderCache['/template/${template[i]}'] = ${fileNameWithoutExtend}HTML;`);
 }
-fs.writeFileSync('./src/swim/cacher.js', exportResult.replace(/{import}/gi, importResult.join('\r\n')).replace(/{cache}/gi, cacheResult.join('\r\n')));
+
+for (let i = 0; i < css.length; i++) {
+    cacheResult.push(`        window.SwimAppStylesheet.push('/css/${css[i]}');`);
+    importResult.push(`import '../css/${css[i]}';`);
+}
+fs.writeFileSync('./src/swim/cacher.js', exportResult.replace(/{import}/gi, importResult.join('\r')).replace(/{cache}/gi, cacheResult.join('\r')));

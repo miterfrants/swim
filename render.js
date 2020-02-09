@@ -57,13 +57,12 @@ export const Render = {
         });
     },
     appendStylesheetToHead: (elStylesheet) => {
-        if (elStylesheet.href.indexOf('http') === -1) {
-            elStylesheet.href = location.origin + elStylesheet.href;
+        const styleLink = elStylesheet.href.replace(location.origin, '');
+        if (window.SwimAppStylesheet.indexOf(styleLink) !== -1) {
+            return;
         }
-        if (window.SwimAppStylesheet.indexOf(elStylesheet.href) === -1) {
-            document.head.appendChild(elStylesheet);
-            window.SwimAppStylesheet.push(elStylesheet.href);
-        }
+        document.head.appendChild(elStylesheet);
+        window.SwimAppStylesheet.push(elStylesheet.href);
     },
     bindingVariableToDom: (controller, elRoot, variable, args) => {
         Render._renderSwimFor(elRoot, variable, controller, args);
@@ -100,6 +99,37 @@ export const Render = {
                 propertyName: propertyNameInComponent
             });
         }
+    },
+    removeLoadedStylesheet(htmlString) {
+        const stylesheetTags = Render._extractStyleLinkTags(htmlString);
+        for (let i = 0; i < stylesheetTags.length; i++) {
+            const stylesheetHref = this._extractStyleSheetHref(stylesheetTags[i]);
+            if (window.SwimAppStylesheet.indexOf(stylesheetHref) !== -1) {
+                htmlString = htmlString.replace(stylesheetTags[i], '');
+            }
+        }
+        return htmlString;
+    },
+    _extractStyleLinkTags(htmlString) {
+        const result = [];
+        let currentPosistion = 0;
+        let start, end;
+        while (htmlString.indexOf('<link', currentPosistion) !== -1) {
+            start = htmlString.indexOf('<link', currentPosistion);
+            end = htmlString.indexOf('>', start + 1);
+            const linkTagString = htmlString.substring(start, end + 1);
+            if (linkTagString.indexOf('rel="stylesheet"') !== -1) {
+                result.push(linkTagString);
+            }
+            currentPosistion = end + 1;
+        }
+        return result;
+    },
+    _extractStyleSheetHref(linkTagString) {
+        const hrefStartPos = linkTagString.indexOf('href');
+        const hrefQuoteStartPos = linkTagString.indexOf('"', hrefStartPos + 1);
+        const hrefQuoteEndPos = linkTagString.indexOf('"', hrefQuoteStartPos + 1);
+        return linkTagString.substring(hrefQuoteStartPos + 1, hrefQuoteEndPos);
     },
     _renderSwimFor: (elRoot, variable, controller, args) => {
         for (let propertyName in variable) {
