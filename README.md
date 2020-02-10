@@ -1,7 +1,7 @@
 # Initial Swim Project
 1. `npm init -y`
 2. `npm install https://github.com/miterfrants/swim.git`
-3. `node node_modules/swim/auto-script/inialize-project-structure.js`
+3. `node node_modules/swim/auto/initialize-project-structure.js`
 
 # Update Swim Core Libs
 1. `npm run swim-update`
