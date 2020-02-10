@@ -13,7 +13,6 @@ require('./update-core.js');
 
 const package = fs.readJSONSync('package.json');
 package.scripts['swim-update'] = 'npm install https://github.com/miterfrants/swim.git && node node_modules/swim/auto/update-core.js';
-package.scripts['swim-init'] = 'node node_modules/swim/auto/initialize-project-structure.js && npm install webpack webpack-cli html-loader html-webpack-plugin copy-webpack-plugin css-loader mini-css-extract-plugin webpack-fix-style-only-entries --save-dev';
 package.scripts['swim-build'] = 'node node_modules/swim/auto/cacher-for-webpack.js && npx webpack --config ./src/webpack.config.js';
 fs.writeJSONSync('package.json', package, {
     spaces: 2,
