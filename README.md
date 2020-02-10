@@ -1,3 +1,8 @@
+# Features
+- no need to wait bundle & build in dev mode (save your life)
+- base on es module & vanilla js
+- bundle and build by webpack4 
+
 # Initial Swim Project
 1. `npm init -y`
 2. `npm install https://github.com/miterfrants/swim.git`
