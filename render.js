@@ -286,15 +286,15 @@ export const Render = {
 
             for (let i = 0; i < elementsWithAttribute.length; i++) {
                 const element = elementsWithAttribute[i];
-                if (element.tagName.toLowerCase() === 'select') {
-                    Render.registElementToVariable(variableObj, propertyName, element, 'select');
-                    element.value = variableObj[propertyName];
-                }
-
                 let attrNames = element.getAttributeNames();
                 for (let j = 0; j < attrNames.length; j++) {
                     const attrName = attrNames[j];
                     const attrValue = element.getAttribute(attrName);
+
+                    if (element.tagName.toLowerCase() === 'select' && attrName === 'value' && attrValue.indexOf(`{${propertyName}}`) !== -1) {
+                        Render.registElementToVariable(variableObj, propertyName, element, 'select');
+                        element.value = variableObj[propertyName];
+                    }
 
                     if (attrName === `{${propertyName.toLowerCase()}}`) {
                         Render.registElementToVariable(variableObj, propertyName, element, 'no-value-attribute', attrName);
@@ -350,7 +350,7 @@ export const Render = {
                 }
             }
 
-            const testVariable = Object.defineProperty(variableObj, propertyName, {
+            const registResult = Object.defineProperty(variableObj, propertyName, {
                 // refactor: debounce set
                 set: function (newValue) {
                     const bindingElements = Render._getBindingElements(variableObj, propertyName);
@@ -388,13 +388,13 @@ export const Render = {
                     return variableObj[`_${propertyName}`];
                 }
             });
-            if (!window.test) {
-                window.test = [];
+            if (!window.SwimAppRegisterElements) {
+                window.SwimAppRegisterElements = [];
             }
-            window.test.push({
+            window.SwimAppRegisterElements.push({
                 className: elRoot.className,
                 propertyName,
-                ref: testVariable
+                ref: registResult
             });
         }
     },
