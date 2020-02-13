@@ -1,5 +1,5 @@
 # Features
-- no need to wait bundle & build in dev mode (save your life)
+- no need to wait bundle & build in dev mode
 - base on es module & vanilla js
 - bundle and build by webpack4 
 
