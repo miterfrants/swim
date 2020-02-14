@@ -40,7 +40,7 @@ export class RoutingController {
         if (this.elHTML && this.context.isUpdateDOMFirstRunRouting) {
             revertOriginalChildRouter(this);
             // copy original text to controller elHTML;
-            this.elHTML = this.originalHTML.toDom();
+            this.elHTML = Render.removeLoadedStylesheet(this.originalHTML).toDom();
 
             // search component
             // refactor: use xpath

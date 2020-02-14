@@ -43,7 +43,7 @@ for (let i = 0; i < components.length; i++) {
         componentResult = componentResult.replace(/{css}/gi, `import '../components/${componentSnakeCaseName}/${componentSnakeCaseName}.css'`);
         cacheResult.push(`        window.SwimAppStylesheet.push('/components/${componentSnakeCaseName}/${componentSnakeCaseName}.css');`);
     } else {
-        componentResult = componentResult.replace(/{css}/gi, '');
+        componentResult = componentResult.replace(/{css};/gi, '');
     }
     importResult.push(componentResult);
 
