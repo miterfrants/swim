@@ -71,7 +71,13 @@ export const Router = {
         });
 
         function overWriteLinkBehavior(e) {
-            if (e.currentTarget.target === '_blank') {
+            var isMacLike = /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform);
+            var isIOS = /(iPhone|iPod|iPad)/i.test(navigator.platform);
+            var isWin = /(win32)/i.test(navigator.platform);
+            if (e.currentTarget.target === '_blank' ||
+                ((isMacLike || isIOS) && e.metaKey === true) ||
+                ((isWin) && e.ctrlKey === true)
+            ) {
                 return;
             }
             if (e.currentTarget.href.indexOf(location.origin) !== -1) {
