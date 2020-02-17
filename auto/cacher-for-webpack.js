@@ -39,7 +39,10 @@ for (let i = 0; i < components.length; i++) {
     let componentCamelCaseName = snakeToCamel(componentSnakeCaseName);
     componentCamelCaseName = componentCamelCaseName.substring(0, 1).toUpperCase() + componentCamelCaseName.substring(1);
     let componentResult = componentTemplate.replace(/{ComponentSnakeCaseName}/gi, componentSnakeCaseName).replace(/{ComponentCamelCaseName}/gi, componentCamelCaseName);
-    if (fs.existsSync(`./src/components/${componentSnakeCaseName}/${componentSnakeCaseName}.css`)) {
+    if (fs.existsSync(`./src/components/${componentSnakeCaseName}/${componentSnakeCaseName}.scss`)) {
+        componentResult = componentResult.replace(/{css}/gi, `import '../components/${componentSnakeCaseName}/${componentSnakeCaseName}.scss'`);
+        cacheResult.push(`        window.SwimAppStylesheet.push('/components/${componentSnakeCaseName}/${componentSnakeCaseName}.css');`);
+    } else if (fs.existsSync(`./src/components/${componentSnakeCaseName}/${componentSnakeCaseName}.css`)) {
         componentResult = componentResult.replace(/{css}/gi, `import '../components/${componentSnakeCaseName}/${componentSnakeCaseName}.css'`);
         cacheResult.push(`        window.SwimAppStylesheet.push('/components/${componentSnakeCaseName}/${componentSnakeCaseName}.css');`);
     } else {
