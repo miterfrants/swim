@@ -62,7 +62,7 @@ export const Render = {
             return;
         }
         document.head.appendChild(elStylesheet);
-        window.SwimAppStylesheet.push(elStylesheet.href);
+        window.SwimAppStylesheet.push(styleLink);
     },
     bindingVariableToDom: (controller, elRoot, variable, args) => {
         Render._renderSwimFor(elRoot, variable, controller, args);
@@ -129,7 +129,7 @@ export const Render = {
         const hrefStartPos = linkTagString.indexOf('href');
         const hrefQuoteStartPos = linkTagString.indexOf('"', hrefStartPos + 1);
         const hrefQuoteEndPos = linkTagString.indexOf('"', hrefQuoteStartPos + 1);
-        return linkTagString.substring(hrefQuoteStartPos + 1, hrefQuoteEndPos);
+        return linkTagString.substring(hrefQuoteStartPos + 1, hrefQuoteEndPos).replace(location.origin, '');
     },
     _renderSwimFor: (elRoot, variable, controller, args) => {
         for (let propertyName in variable) {
