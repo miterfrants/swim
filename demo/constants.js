@@ -4,5 +4,6 @@ export const RESPONSE_STATUS = {
 };
 
 export const API = {
-    TEST: 'test.json'
+    TEST: 'test.json',
+    TODOS: 'todos.json'
 };

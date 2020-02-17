@@ -1,0 +1,103 @@
+.todo-item {
+    padding: 20px 20px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+
+    .title {
+        width: calc(100% - 40px);
+    }
+
+    button.btn-circle {
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        opacity: 0.8;
+        border: 2px solid white;
+        position: relative;
+        transition: box-shadow 0.5s, transform 0.5s, background-color 0.5s;
+        cursor: pointer;
+
+        &:focus,
+        &:hover,
+        &:active {
+            opacity: 1;
+            box-shadow: 0 3px 8px rgba(120, 120, 120, 0.5);
+            transform: translateY(-1px);
+        }
+    }
+
+    button.delete {
+        background: rgb(255, 192, 34);
+
+        &:focus,
+        &:hover,
+        &:active {
+            background: rgb(255, 111, 34);
+        }
+
+        &:before,
+        &:after {
+            position: absolute;
+            left: 13.5px;
+            content: " ";
+            height: 18px;
+            width: 3px;
+            background-color: #fff;
+            top: 5px;
+            border-radius: 11px;
+        }
+
+        &:before {
+            transform: rotate(45deg);
+        }
+
+        &:after {
+            transform: rotate(-45deg);
+        }
+    }
+
+    button.check {
+        margin-right: 20px;
+        background-color: rgba(188, 255, 160, 0.5);
+
+        &:focus,
+        &:hover,
+        &:active {
+            background: #0edabc;
+        }
+    }
+
+    button.check.checked {
+        opacity: 1;
+        background: #0edabc;
+        box-shadow: 0 3px 8px rgba(120, 120, 120, 0.5);
+        transform: translateY(-1px);
+
+        &:before,
+        &:after {
+            position: absolute;
+            content: " ";
+            background-color: #fff;
+            border-radius: 11px;
+        }
+
+        &:before {
+            width: 4px;
+            height: 29px;
+            transform: rotate(45deg);
+            top: -2px;
+            left: 21px;
+            box-shadow: 0 0 8px rgba(120, 120, 120, 0.5);
+        }
+
+        &:after {
+            width: 4px;
+            height: 15px;
+            transform: rotate(-45deg);
+            top: 10px;
+            left: 8px;
+
+        }
+    }
+}

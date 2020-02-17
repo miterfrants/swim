@@ -1,0 +1,214 @@
+.todos {
+    .pad-20 {
+        padding: 20px;
+    }
+
+    input {
+        font-size: 1rem;
+        margin-left: 10px;
+        padding: 8px 15px;
+        width: 200px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+
+        &:focus {
+            outline-color: rgba(180, 225, 255, 0);
+        }
+    }
+
+    button {
+        font-size: 1rem;
+        padding: 8px 15px;
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+
+        &:focus {
+            outline-color: rgba(180, 225, 255, 0);
+        }
+
+        &:active {
+            background-color: rgb(151, 218, 255);
+        }
+    }
+
+    .card {
+        @keyframes barber-lamp-rotate {
+            0% {
+                transform: rotate(25deg) translate(-51px, 0px);
+            }
+
+            100% {
+                transform: rotate(25deg) translate(-51px, -48px);
+            }
+        }
+
+        width: 500px;
+        margin: 40px auto;
+        border-radius: 10px;
+        box-shadow: 0 0 10px 2px #ccc;
+        position: relative;
+        background: #fff8de;
+
+        component-todo-item {
+            display: block;
+
+            &:nth-child(odd) {
+                background-color: #fff0c0;
+            }
+        }
+
+
+
+        .barber-lamp {
+            transition: transform 1s;
+            transition-timing-function: cubic-bezier(0.52, 0.15, 0, 1.65);
+            margin-right: 20px;
+            width: 30px;
+            position: absolute;
+            left: -36px;
+            top: 0;
+
+            &.on {
+                .rotate-bar {
+                    .bar-container {
+                        animation: barber-lamp-rotate 2s infinite;
+                        animation-timing-function: linear;
+                    }
+                }
+            }
+
+            .bubble-light {
+                position: relative;
+                height: 20px;
+                overflow: hidden;
+                border-bottom: 2px solid #888;
+                width: 24px;
+                margin-left: 3px;
+
+                &::before {
+                    content: " ";
+                    display: block;
+                    width: 20px;
+                    height: 20px;
+                    border: 2px solid #888;
+                    background: rgb(157, 157, 157);
+                    border-radius: 50%;
+                }
+
+                &::after {
+                    content: " ";
+                    display: block;
+                    width: 15px;
+                    height: 15px;
+                    border-radius: 50%;
+                    background: rgba(255, 255, 255, 0.4);
+                    position: absolute;
+                    top: 2px;
+                    left: 6px;
+                }
+            }
+
+            .bubble-light-bottom {
+                margin-top: 1px;
+                width: 22px;
+                border-top: 4px solid #888;
+                border-bottom: 0px solid transparent;
+                border-left: 4px solid transparent;
+                border-right: 4px solid transparent;
+            }
+
+            .rotate-bar {
+                margin-top: 2px;
+                border: 2px solid #888;
+                width: 18px;
+                height: 40px;
+                margin-left: 4px;
+                position: relative;
+                overflow: hidden;
+
+                .bar-container {
+                    transform: rotate(25deg) translate(-51px, 0px);
+
+                    .bar {
+                        width: 200px;
+                        height: 8px;
+                    }
+
+                    .white {
+                        background: white;
+                    }
+
+                    .red {
+                        background: #db2f33;
+                    }
+
+                    .blue {
+                        background: #55466d;
+                    }
+                }
+
+                &::after {
+                    height: 40px;
+                    width: 6px;
+                    display: block;
+                    content: " ";
+                    margin-left: 10px;
+                    background: rgba(255, 255, 255, 0.4);
+                    position: absolute;
+                    top: 0;
+                }
+            }
+
+            .rotate-bar-bottom {
+                margin-top: 2px;
+                width: 22px;
+                border-bottom: 4px solid #888;
+                border-top: 0px solid transparent;
+                border-left: 4px solid transparent;
+                border-right: 4px solid transparent;
+            }
+
+            .lamp-bottom {
+                margin-top: 1px;
+                overflow: hidden;
+                position: relative;
+                height: 20px;
+                border-top: 2px solid #888;
+
+                &::before {
+                    content: " ";
+                    display: block;
+                    width: 24px;
+                    height: 18px;
+                    border-radius: 47%;
+                    background: #9d9d9d;
+                    border: 2px solid #888;
+                    position: absolute;
+                    top: -16px;
+                    margin-left: 1px;
+                }
+
+                &::after {
+                    content: " ";
+                    display: block;
+                    width: 4px;
+                    height: 4px;
+                    background: #888;
+                    border-radius: 50%;
+                    margin-left: 13px;
+                    position: absolute;
+                    top: 4px;
+                }
+            }
+        }
+    }
+
+    .auth {
+        font-size: 12px;
+        color: #ccc;
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+    }
+}

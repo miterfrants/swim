@@ -1,0 +1,49 @@
+<div class="todos">
+    <link href="/css/todos.css" rel="stylesheet">
+    <div class="card">
+        <div class="pad-20 ">
+            Todos
+            <div class="barber-lamp {barberStatusClass}" style="transform: translate(0, {barberLampTop}px)">
+                <div class="bubble-light"></div>
+                <div class="bubble-light-bottom"></div>
+                <div class="rotate-bar">
+                    <div class="bar-container">
+                        <div class="bar blue"></div>
+                        <div class="bar white"></div>
+                        <div class="bar red"></div>
+                        <div class="bar blue"></div>
+                        <div class="bar white"></div>
+                        <div class="bar red"></div>
+                        <div class="bar blue"></div>
+                        <div class="bar white"></div>
+                        <div class="bar red"></div>
+                        <div class="bar blue"></div>
+                        <div class="bar white"></div>
+                        <div class="bar red"></div>
+                    </div>
+                </div>
+                <div class="rotate-bar-bottom"></div>
+                <div class="lamp-bottom"></div>
+            </div>
+            <span class="{editPanelClass} update-todo-form">
+                <input value="{selectedTodoItemTitle}" type="text" data-field="title" class="todo-input" value=""
+                    onkeyup="controller.updateAfterClickEnter" />
+                <input type="hidden" data-field="id" value="{selectedTodoItemId}" />
+                <button onclick="controller.update"> Update </button>
+            </span>
+
+            <span class="{addPanelClass} add-todo-form">
+                <input type="text" data-field="title" class="todo-input" value=""
+                    onkeyup="controller.addAfterClickEnter" />
+                <button onclick="controller.add"> Add </button>
+            </span>
+        </div>
+        <div swim-for="todo in todos">
+            <component-todo-item variable="todo.selected,todo.title,todo.id,todo.status" on-delete="controller.delete"
+                on-check="controller.check" on-uncheck="controller.uncheck" on-select="controller.toogleSelectToDoItem">
+        </div>
+    </div>
+    <div class="auth">
+        Author: Peter Huang
+    </div>
+</div>

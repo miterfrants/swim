@@ -3,7 +3,12 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const FixStyleOnlyEntriesPlugin = require('webpack-fix-style-only-entries');
-
+const TerserJSPlugin = require('terser-webpack-plugin');
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const webpack = require('webpack');
+const {
+    CleanWebpackPlugin
+} = require('clean-webpack-plugin');
 
 module.exports = {
     entry: './src/app-for-build.js',
@@ -12,19 +17,42 @@ module.exports = {
         path: path.resolve(__dirname, './dist'),
         publicPath: '/'
     },
+    optimization: {
+        minimizer: [new TerserJSPlugin({})],
+    },
     module: {
         rules: [{
+            test: /\.js$/i,
+            use: [{
+                loader: 'string-replace-loader',
+                options: {
+                    search: 'xxxx-dev',
+                    replace: process.env.NODE_ENV === 'prod' ? 'xxxx-prod' : 'xxxx-dev',
+                }
+            }]
+        }, {
+            test: /\.scss$/i,
+            use: [MiniCssExtractPlugin.loader, 'css-loader', 'sass-loader']
+        }, {
             test: /\.css$/i,
             use: [MiniCssExtractPlugin.loader, 'css-loader']
         }, {
             test: /\.html$/i,
             loader: 'html-loader',
+            options: {
+                minimize: true,
+            }
         }],
     },
     plugins: [
+        new OptimizeCSSAssetsPlugin({}),
+        new CleanWebpackPlugin(),
         new FixStyleOnlyEntriesPlugin(),
         new MiniCssExtractPlugin({
             filename: 'app.[hash].css'
+        }),
+        new webpack.DefinePlugin({
+            'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV)
         }),
         new HtmlWebpackPlugin({
             template: './src/build/index.html',

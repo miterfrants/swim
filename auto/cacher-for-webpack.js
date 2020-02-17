@@ -7,6 +7,7 @@ const components = fs.readdirSync('./src/components', {
 
 const template = fs.readdirSync('./src/template');
 const css = fs.readdirSync('./src/css').filter(filename => filename.endsWith('.css'));
+const scss = fs.readdirSync('./src/css').filter(filename => filename.endsWith('.scss'));
 
 const componentTemplate = `import {
     {ComponentCamelCaseName}Component
@@ -63,5 +64,10 @@ for (let i = 0; i < template.length; i++) {
 for (let i = 0; i < css.length; i++) {
     cacheResult.push(`        window.SwimAppStylesheet.push('/css/${css[i]}');`);
     importResult.push(`import '../css/${css[i]}';`);
+}
+
+for (let i = 0; i < scss.length; i++) {
+    cacheResult.push(`        window.SwimAppStylesheet.push('/css/${scss[i].replace(/.scss/gi,'.css')}');`);
+    importResult.push(`import '../css/${scss[i]}';`);
 }
 fs.writeFileSync('./src/swim/cacher.js', exportResult.replace(/{import}/gi, importResult.join('\r')).replace(/{cache}/gi, cacheResult.join('\r')));

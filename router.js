@@ -239,7 +239,7 @@ export const Router = {
             if (htmlPath) {
                 let loader = new Loader();
                 let html = await loader.loadHTML(htmlPath);
-                html = Render.removeLoadedStylesheet(html);
+                html = Render.appendStylesheetToHeadAndRemoveLoaded(html);
                 elHTML = html.toDom();
             }
             controllerInstance = new controller(elHTML, parentController, context.args, context);

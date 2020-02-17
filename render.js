@@ -17,10 +17,26 @@ export const Render = {
                 const componentInfo = Render._getComponentInfo(el.tagName.toLowerCase());
                 const varKeys = el.getAttribute('variable') ? el.getAttribute('variable').split(',') : [];
                 const variable = {};
+                const variableMapping = [];
+
+
                 for (let i = 0; i < varKeys.length; i++) {
-                    if (pageVariable[varKeys[i]] !== undefined) {
-                        variable[varKeys[i]] = pageVariable[varKeys[i]];
+                    const value = Render._getValueFromJsonPath(pageVariable, varKeys[i]);
+                    if (value === null || value === undefined) {
+                        continue;
                     }
+                    let newVariableName = varKeys[i];
+                    let variableRef = pageVariable;
+                    if (varKeys[i].indexOf('.') !== -1) {
+                        newVariableName = varKeys[i].substring(varKeys[i].lastIndexOf('.') + 1);
+                        variableRef = Render._getValueFromJsonPath(pageVariable, varKeys[i].substring(0, varKeys[i].indexOf('.')));
+                    }
+                    variable[newVariableName] = value;
+                    variableMapping.push({
+                        variableRef,
+                        variableKey: newVariableName,
+                        variableKeyInComponent: newVariableName
+                    });
                 }
                 let componentClass;
                 try {
@@ -35,8 +51,8 @@ export const Render = {
                 }
 
                 const componentInstance = new componentClass(el, variable, args);
-                for (let key in variable) {
-                    Render.registComponentToVariable(pageVariable, key, componentInstance, key);
+                for (let i = 0; i < variableMapping.length; i++) {
+                    Render.registComponentToVariable(variableMapping[i].variableRef, variableMapping[i].variableKey, componentInstance, variableMapping[i].variableKeyInComponent);
                 }
                 await componentInstance.render();
                 // binding event;
@@ -55,14 +71,6 @@ export const Render = {
                 }
             }
         });
-    },
-    appendStylesheetToHead: (elStylesheet) => {
-        const styleLink = elStylesheet.href.replace(location.origin, '');
-        if (window.SwimAppStylesheet.indexOf(styleLink) !== -1) {
-            return;
-        }
-        document.head.appendChild(elStylesheet);
-        window.SwimAppStylesheet.push(styleLink);
     },
     bindingVariableToDom: (controller, elRoot, variable, args) => {
         Render._renderSwimFor(elRoot, variable, controller, args);
@@ -85,8 +93,8 @@ export const Render = {
             });
         }
     },
-    registComponentToVariable(variable, propertyName, componentInstance, propertyNameInComponent) {
-        let variableBindingComponentKey = Render._getBindingComponentsKey(propertyName);
+    registComponentToVariable(variable, variableName, componentInstance, variableNameInComponent) {
+        let variableBindingComponentKey = Render._getBindingComponentsKey(variableName);
         if (!variable[variableBindingComponentKey]) {
             variable[variableBindingComponentKey] = [];
         }
@@ -96,19 +104,46 @@ export const Render = {
         if (!target) {
             variable[variableBindingComponentKey].push({
                 ref: componentInstance,
-                propertyName: propertyNameInComponent
+                variableName: variableNameInComponent
             });
         }
     },
-    removeLoadedStylesheet(htmlString) {
+    appendStylesheetToHeadAndRemoveLoaded(htmlString) {
         const stylesheetTags = Render._extractStyleLinkTags(htmlString);
         for (let i = 0; i < stylesheetTags.length; i++) {
             const stylesheetHref = this._extractStyleSheetHref(stylesheetTags[i]);
             if (window.SwimAppStylesheet.indexOf(stylesheetHref) !== -1) {
                 htmlString = htmlString.replace(stylesheetTags[i], '');
+            } else {
+                const elLink = document.createElement('link');
+                elLink.rel = ' stylesheet';
+                elLink.href = stylesheetHref;
+                document.head.appendChild(elLink);
+                window.SwimAppStylesheet.push(stylesheetHref);
             }
         }
         return htmlString;
+    },
+    _getValueFromJsonPath(jsonData, path) {
+        if (!(jsonData instanceof Object) || typeof (path) === 'undefined') {
+            throw 'Not valid argument:jsonData:' + jsonData + ', path:' + path;
+        }
+        path = path.replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
+        path = path.replace(/^\./, ''); // strip a leading dot
+        var pathArray = path.split('.');
+        for (var i = 0, n = pathArray.length; i < n; ++i) {
+            var key = pathArray[i];
+            if (key in jsonData) {
+                if (jsonData[key] !== null) {
+                    jsonData = jsonData[key];
+                } else {
+                    return null;
+                }
+            } else {
+                return key;
+            }
+        }
+        return jsonData;
     },
     _extractStyleLinkTags(htmlString) {
         const result = [];
@@ -118,7 +153,7 @@ export const Render = {
             start = htmlString.indexOf('<link', currentPosistion);
             end = htmlString.indexOf('>', start + 1);
             const linkTagString = htmlString.substring(start, end + 1);
-            if (linkTagString.indexOf('rel="stylesheet"') !== -1) {
+            if (linkTagString.indexOf('rel="stylesheet"') !== -1 || linkTagString.indexOf('rel=stylesheet') !== -1) {
                 result.push(linkTagString);
             }
             currentPosistion = end + 1;
@@ -137,7 +172,7 @@ export const Render = {
                 continue;
             }
             const loopRenderContainers = [];
-            elRoot.querySelectorAll(`[swim-for="${propertyName}"]`).forEach((elContainer) => {
+            elRoot.querySelectorAll(`[swim-for="${propertyName}"],[swim-for$="in ${propertyName}"]`).forEach((elContainer) => {
                 loopRenderContainers.push(elContainer);
                 Render._renderSwimForMain(elContainer, variable[propertyName], controller, args);
             });
@@ -179,6 +214,21 @@ export const Render = {
         if (Array.isArray(variable)) {
             for (let i = 0; i < variable.length; i++) {
                 const elItem = itemTemplate.toDom();
+                if (elContainer.getAttribute('swim-for').indexOf(' in ') !== -1) {
+                    const variableAs = elContainer.getAttribute('swim-for').split(' in ')[0];
+                    const replacement = new RegExp(variableAs, 'g');
+                    // replace component attribute;
+                    elItem.querySelectorAll('*').forEach(async (el) => {
+                        if (el && el.tagName.toLowerCase().indexOf('component-') !== -1) {
+                            const newVariableAttribute = el.getAttribute('variable').replace(replacement, `${elContainer.getAttribute('swim-for').split(' in ')[1]}[${i}]`);
+                            el.setAttribute('variable', newVariableAttribute);
+                        }
+                    });
+                    if (elItem.tagName.toLowerCase().indexOf('component-') !== -1) {
+                        const newVariableAttribute = elItem.getAttribute('variable').replace(replacement, `${elContainer.getAttribute('swim-for').split(' in ')[1]}[${i}]`);
+                        elItem.setAttribute('variable', newVariableAttribute);
+                    }
+                }
                 Render.bindingVariableToDom(controller, elItem, variable[i], args);
                 if (elContainer.tagName === 'SELECT' && elContainer.hasAttribute('value')) {
                     if (elItem.value === elContainer.getAttribute('value')) {
@@ -191,6 +241,7 @@ export const Render = {
             console.warn('loop variable is not array');
         }
     },
+    // todo: refactor duplicate code
     _bindingEvent: (elRoot, controller) => {
         elRoot.querySelectorAll('[onclick^="controller."]').forEach((el) => {
             const stringOfFuncNames = el.getAttribute('onclick').split(',');
@@ -235,6 +286,50 @@ export const Render = {
             }
         });
 
+        let onclickCallback = elRoot.getAttribute('onclick');
+        if (onclickCallback && onclickCallback.indexOf('controller.') !== -1) {
+            const stringOfFuncNames = onclickCallback.split(',');
+            for (let i = 0; i < stringOfFuncNames.length; i++) {
+                const funcName = stringOfFuncNames[i].replace('controller.', '');
+                elRoot.addEventListener('click', (e) => {
+                    controller[funcName](e);
+                });
+                elRoot.removeAttribute('onclick');
+            }
+        }
+        let onchangeCallback = elRoot.getAttribute('onchange');
+        if (onchangeCallback && onchangeCallback.indexOf('controller.') !== -1) {
+            const stringOfFuncNames = onchangeCallback.split(',');
+            for (let i = 0; i < stringOfFuncNames.length; i++) {
+                const funcName = stringOfFuncNames[i].replace('controller.', '');
+                elRoot.addEventListener('change', (e) => {
+                    controller[funcName](e);
+                });
+                elRoot.removeAttribute('onchange');
+            }
+        }
+        let onkeyupCallback = elRoot.getAttribute('onkeyup');
+        if (onkeyupCallback && onkeyupCallback.indexOf('controller.') !== -1) {
+            const stringOfFuncNames = onkeyupCallback.split(',');
+            for (let i = 0; i < stringOfFuncNames.length; i++) {
+                const funcName = stringOfFuncNames[i].replace('controller.', '');
+                elRoot.addEventListener('keyup', (e) => {
+                    controller[funcName](e);
+                });
+                elRoot.removeAttribute('onkeyup');
+            }
+        }
+        let onkeydownCallback = elRoot.getAttribute('onkeydown');
+        if (onkeydownCallback && onkeydownCallback.indexOf('controller.') !== -1) {
+            const stringOfFuncNames = onkeydownCallback.split(',');
+            for (let i = 0; i < stringOfFuncNames.length; i++) {
+                const funcName = stringOfFuncNames[i].replace('controller.', '');
+                elRoot.addEventListener('keydown', (e) => {
+                    controller[funcName](e);
+                });
+                elRoot.removeAttribute('onkeydown');
+            }
+        }
     },
 
     _getBindingElementsKey: (propertyName) => {
@@ -262,6 +357,9 @@ export const Render = {
                 el.bindingAttributes[attrName][propertyName] = newValue;
                 for (let key in el.bindingAttributes[attrName]) {
                     attrValue = attrValue.replace(`{${key}}`, el.bindingAttributes[attrName][key]);
+                }
+                if (el.tagName.toLowerCase() === 'input' && attrName === 'value') {
+                    el.value = attrValue;
                 }
                 el.setAttribute(attrName, attrValue);
             }
@@ -349,7 +447,6 @@ export const Render = {
                     el.textContent = el.template.replace(`{${propertyName}}`, variableObj[propertyName]);
                 }
             }
-
             const registResult = Object.defineProperty(variableObj, propertyName, {
                 // refactor: debounce set
                 set: function (newValue) {
@@ -379,7 +476,7 @@ export const Render = {
                     const components = Render._getBindingComponent(variableObj, propertyName);
                     if (components) {
                         for (let i = 0; i < components.length; i++) {
-                            components[i].ref.variable[components[i].propertyName] = newValue;
+                            components[i].ref.variable[propertyName] = newValue;
                         }
                     }
                     return;
@@ -412,9 +509,3 @@ export const Render = {
         };
     }
 };
-
-async function awaitForEach(array, callback) {
-    for (let i = 0; i < array.length; i++) {
-        await callback(array[i]);
-    }
-}

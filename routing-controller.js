@@ -40,7 +40,7 @@ export class RoutingController {
         if (this.elHTML && this.context.isUpdateDOMFirstRunRouting) {
             revertOriginalChildRouter(this);
             // copy original text to controller elHTML;
-            this.elHTML = Render.removeLoadedStylesheet(this.originalHTML).toDom();
+            this.elHTML = Render.appendStylesheetToHeadAndRemoveLoaded(this.originalHTML).toDom();
 
             // search component
             // refactor: use xpath
@@ -100,7 +100,6 @@ function saveOriginalChildRouter(controllerInstance, sourceElHTML) {
 
     for (let i = 0; i < stylesheets.length; i++) {
         sourceElHTML.removeChild(stylesheets[i]);
-        Render.appendStylesheetToHead(stylesheets[i]);
     }
 
     // save original elHTML childNodes

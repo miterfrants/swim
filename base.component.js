@@ -16,13 +16,15 @@ export class BaseComponent {
 
     async render(variable) {
         this.variable = variable;
+
         // load html
         let htmlFileName = this.camelToSnake(this.id.substring(0, this.id.toLowerCase().lastIndexOf('component')));
         const loader = new Loader();
         let html = await loader.loadHTML(`/components/${htmlFileName}/${htmlFileName}.html`);
-        html = Render.removeLoadedStylesheet(html);
+        html = Render.appendStylesheetToHeadAndRemoveLoaded(html);
         this.template = html;
         this.elHTML = html.toDom();
+
         // bind variable and event listener
         Render.bindingVariableToDom(this, this.elHTML, variable, this.args);
         Render.renderComponentAsync(this.elHTML, variable, this.args, this);
@@ -34,6 +36,4 @@ export class BaseComponent {
             return m[0] + '-' + m[1];
         }).toLowerCase();
     }
-
-
 }
