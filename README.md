@@ -4,12 +4,12 @@
 - bundle and build by webpack4 
 
 # Initial Swim Project
-1. `npm init -y`
-2. `npm install https://github.com/miterfrants/swim.git`
-3. `node node_modules/swim/auto/initialize-project-structure.js`
+1. `npm init -y` init node project
+2. `npm install https://github.com/miterfrants/swim.git` install swim from github
+3. `node node_modules/swim/auto/initialize-project-structure.js` initialize swim structure of project
 
 # Update Swim Core Libs
-1. `npm run swim-update`
+`npm run swim-update`
 
 # Launch Dev Server
 1. open terminal and point to your project folder
