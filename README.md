@@ -1,7 +1,7 @@
 # Features
 - no need to wait bundle & build in dev mode
 - base on es module & vanilla js
-- bundle and build by webpack4 
+- bundle and build by webpack4 for production
 
 # Initial Swim Project
 1. `npm init -y` init node project
