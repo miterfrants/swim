@@ -15,11 +15,11 @@
 1. open terminal and point to your project folder
 2. `cd ./src` point to src folder
 3. `node server.js` run dev server with nodejs
-4. open `https://localhost/test/` with browser
+4. open `https://localhost/todos/` with browser
 
 # Launch Build Server
 1. open terminal with your project
 2. `cd ./dist` point to distribution folder
 3. `npm run swim-build` build and bundle js, css, html
 4. `node server.js` run bundle code with nodejs
-5. open `https://localhost/test/` with browser
+5. open `https://localhost/todos/` with browser
