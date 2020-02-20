@@ -42,6 +42,7 @@ export class TodosController extends RoutingController {
     }
 
     async postRender() {
+        await super.postRender();
         // binding event
     }
 
