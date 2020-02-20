@@ -42,12 +42,12 @@ export class RoutingController {
             revertOriginalChildRouter(this);
             // copy original text to controller elHTML;
             this.elHTML = Render.appendStylesheetToHeadAndRemoveLoaded(this.originalHTML).toDom();
-            Render.bindingVariableToDom(this, this.elHTML, this.pageVariable, this.args);
-            await Render.renderComponentAsync(this.elHTML, this.pageVariable, this.args, this);
+            Render.bindingVariableToDom(this, this.elHTML, this.pageVariable, this.args, this.context.isServerSideRender);
+            await Render.renderComponentAsync(this.elHTML, this.pageVariable, this.args, this, this.context.isServerSideRender);
             updateDOM(this);
         } else if (this.elShadowHTML && !this.context.isUpdateDOMFirstRunRouting) {
-            Render.bindingVariableToDom(this, this.elHTML, this.pageVariable, this.args);
-            await Render.renderComponentAsync(this.elHTML, this.pageVariable, this.args, this);
+            Render.bindingVariableToDom(this, this.elHTML, this.pageVariable, this.args, this.context.isServerSideRender);
+            await Render.renderComponentAsync(this.elHTML, this.pageVariable, this.args, this, this.context.isServerSideRender);
             if (this.parentController.elHTML && this.parentController.elHTML.querySelector('.child-router')) {
                 const elChildRouters = this.parentController.elHTML.querySelectorAll('.child-router');
                 // latest child router element will be replaced by this controller sahdow element

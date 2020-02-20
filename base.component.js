@@ -6,12 +6,13 @@ import {
 } from './render.js';
 
 export class BaseComponent {
-    constructor(elRoot, variable, args) {
+    constructor(elRoot, variable, args, isServerSideRender) {
         this.elRoot = elRoot;
         this.variable = variable;
         this.args = args;
         this.template = '';
         this.elHTML = null;
+        this.isServerSideRender = isServerSideRender;
     }
 
     async render(variable) {
@@ -23,8 +24,8 @@ export class BaseComponent {
         html = Render.appendStylesheetToHeadAndRemoveLoaded(html);
         this.template = html;
         this.elHTML = html.toDom();
-        Render.bindingVariableToDom(this, this.elHTML, variable, this.args);
-        Render.renderComponentAsync(this.elHTML, variable, this.args, this);
+        Render.bindingVariableToDom(this, this.elHTML, variable, this.args, this.isServerSideRender);
+        Render.renderComponentAsync(this.elHTML, variable, this.args, this, this.isServerSideRender);
         this.elRoot.appendChild(this.elHTML);
     }
 
