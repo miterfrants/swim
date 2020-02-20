@@ -187,6 +187,8 @@ export const Router = {
             }
 
             // load dependency
+            // as server side render appealed to performance, so skip to load dependencies in render server
+            // if u need to use third-paty libary in render function please use npm install and add varaible to fake-browser.js
             if (!context.isServerSideRender) {
                 const loader = new Loader();
                 if (routingRule.dependency) {
@@ -204,6 +206,21 @@ export const Router = {
         document.querySelectorAll('.child-router').forEach((el) => {
             el.style.visibility = '';
         });
+        if (!context.isUpdateDOMFirstRunRouting) {
+            let cursorIndex = 0;
+            let firstHTMLExistsController = window.SwimAppController[cursorIndex];
+            while (!firstHTMLExistsController.elHTML) {
+                cursorIndex += 1;
+                firstHTMLExistsController = window.SwimAppController[cursorIndex];
+            }
+            const elContainer = firstHTMLExistsController.elShadowHTML.parentElement;
+            var child = elContainer.lastElementChild;
+            while (child) {
+                elContainer.removeChild(child);
+                child = elContainer.lastElementChild;
+            }
+            elContainer.appendChild(firstHTMLExistsController.elHTML);
+        }
         context.isUpdateDOMFirstRunRouting = true; // eslint-disable-line
     },
     findMatchRoute: (currentPath, routers) => {
@@ -252,7 +269,7 @@ export const Router = {
             if (!context.isServerSideRender) { // client side only
                 // client side every time enter router
                 await controllerInstance.enter(context.args);
-                if (controllerInstance.render && context.isUpdateDOMFirstRunRouting) {
+                if (controllerInstance.render) {
                     await controllerInstance.render();
                 }
                 if (controllerInstance.postRender) {

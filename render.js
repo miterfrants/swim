@@ -74,7 +74,6 @@ export const Render = {
     },
     bindingVariableToDom: (controller, elRoot, variable, args) => {
         Render._renderSwimFor(elRoot, variable, controller, args);
-        Render._bindingEvent(elRoot, controller);
         Render._bindingVariableAndWatch(elRoot, variable);
     },
     registElementToVariable(variable, propertyName, element, type, originalTemplate) {
@@ -164,7 +163,14 @@ export const Render = {
         const hrefStartPos = linkTagString.indexOf('href');
         const hrefQuoteStartPos = linkTagString.indexOf('"', hrefStartPos + 1);
         const hrefQuoteEndPos = linkTagString.indexOf('"', hrefQuoteStartPos + 1);
-        return linkTagString.substring(hrefQuoteStartPos + 1, hrefQuoteEndPos).replace(location.origin, '');
+        if (hrefQuoteStartPos !== -1) {
+            return linkTagString.substring(hrefQuoteStartPos + 1, hrefQuoteEndPos).replace(location.origin, '');
+        } else {
+            // somebody's html look like <div class=active> no quote, below code will resolve this situation
+            const hrefEqualEndPos = linkTagString.indexOf('=', hrefStartPos);
+            const hrefBlankStartPos = linkTagString.indexOf(' ', hrefEqualEndPos);
+            return linkTagString.substring(hrefEqualEndPos + 1, hrefBlankStartPos);
+        }
     },
     _renderSwimFor: (elRoot, variable, controller, args) => {
         for (let propertyName in variable) {
@@ -186,6 +192,7 @@ export const Render = {
                         for (let i = 0; i < loopRenderContainers.length; i++) {
                             Render._renderSwimForMain(loopRenderContainers[i], variable[propertyName], controller, args);
                             Render.bindingVariableToDom(controller, loopRenderContainers[i], variable, args);
+                            Render.bindingEvent(loopRenderContainers[i], controller);
                             await Render.renderComponentAsync(loopRenderContainers[i], variable, args, controller);
                         }
                     });
@@ -199,6 +206,7 @@ export const Render = {
                         for (let i = 0; i < loopRenderContainers.length; i++) {
                             Render._renderSwimForMain(loopRenderContainers[i], variable[propertyName], controller, args);
                             Render.bindingVariableToDom(controller, loopRenderContainers[i], variable, args);
+                            Render.bindingEvent(loopRenderContainers[i], controller);
                             await Render.renderComponentAsync(loopRenderContainers[i], variable, args, controller);
                         }
                     });
@@ -242,15 +250,17 @@ export const Render = {
         }
     },
     // todo: refactor duplicate code
-    _bindingEvent: (elRoot, controller) => {
+    bindingEvent: (elRoot, controller) => {
         elRoot.querySelectorAll('[onclick^="controller."]').forEach((el) => {
             const stringOfFuncNames = el.getAttribute('onclick').split(',');
             for (let i = 0; i < stringOfFuncNames.length; i++) {
                 const funcName = stringOfFuncNames[i].replace('controller.', '');
-                el.addEventListener('click', (e) => {
-                    controller[funcName](e);
-                });
-                el.removeAttribute('onclick');
+                if (controller[funcName]) {
+                    el.addEventListener('click', (e) => {
+                        controller[funcName](e);
+                    });
+                    el.removeAttribute('onclick');
+                }
             }
         });
 
@@ -264,6 +274,7 @@ export const Render = {
                 el.removeAttribute('onchange');
             }
         });
+
         elRoot.querySelectorAll('[onkeyup^="controller."]').forEach((el) => {
             const stringOfFuncNames = el.getAttribute('onkeyup').split(',');
             for (let i = 0; i < stringOfFuncNames.length; i++) {

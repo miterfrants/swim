@@ -16,7 +16,6 @@ export class BaseComponent {
 
     async render(variable) {
         this.variable = variable;
-
         // load html
         let htmlFileName = this.camelToSnake(this.id.substring(0, this.id.toLowerCase().lastIndexOf('component')));
         const loader = new Loader();
@@ -24,11 +23,22 @@ export class BaseComponent {
         html = Render.appendStylesheetToHeadAndRemoveLoaded(html);
         this.template = html;
         this.elHTML = html.toDom();
-
-        // bind variable and event listener
         Render.bindingVariableToDom(this, this.elHTML, variable, this.args);
         Render.renderComponentAsync(this.elHTML, variable, this.args, this);
         this.elRoot.appendChild(this.elHTML);
+    }
+
+    async postRender() {
+        if (this.elHTML) {
+            Render.bindingEvent(this.elHTML, this);
+        }
+        if (this.elHTML) {
+            this.elHTML.querySelectorAll('*').forEach(async (el) => {
+                if (el && el.tagName.toLowerCase().indexOf('component-') !== -1 && el.componentInstance) {
+                    el.componentInstance.postRender();
+                }
+            });
+        }
     }
 
     camelToSnake(string) {

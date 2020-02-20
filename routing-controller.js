@@ -21,8 +21,9 @@ export class RoutingController {
                 return;
             }
 
+            // todo: add swim id to identify node
             if (document.querySelector(classQuery)) {
-                this.elHTML = document.querySelector(classQuery);
+                this.elShadowHTML = document.querySelector(classQuery);
             } else {
                 this.elHTML = elHTML;
             }
@@ -41,12 +42,38 @@ export class RoutingController {
             revertOriginalChildRouter(this);
             // copy original text to controller elHTML;
             this.elHTML = Render.appendStylesheetToHeadAndRemoveLoaded(this.originalHTML).toDom();
-
-            // search component
-            // refactor: use xpath
             Render.bindingVariableToDom(this, this.elHTML, this.pageVariable, this.args);
             await Render.renderComponentAsync(this.elHTML, this.pageVariable, this.args, this);
             updateDOM(this);
+        } else if (this.elShadowHTML && !this.context.isUpdateDOMFirstRunRouting) {
+            Render.bindingVariableToDom(this, this.elHTML, this.pageVariable, this.args);
+            await Render.renderComponentAsync(this.elHTML, this.pageVariable, this.args, this);
+            if (this.parentController.elHTML && this.parentController.elHTML.querySelector('.child-router')) {
+                const elChildRouters = this.parentController.elHTML.querySelectorAll('.child-router');
+                // latest child router element will be replaced by this controller sahdow element
+                const elLatestChildRouter = elChildRouters[elChildRouters.length - 1];
+                var child = elLatestChildRouter.lastElementChild;
+                while (child) {
+                    elLatestChildRouter.removeChild(child);
+                    child = elLatestChildRouter.lastElementChild;
+                }
+                elLatestChildRouter.appendChild(this.elHTML);
+            }
+        }
+    }
+
+    async postRender() {
+        if (this.elHTML) {
+            Render.bindingEvent(this.elHTML, this);
+        }
+        if (this.elHTML) {
+            this.elHTML.querySelectorAll('*').forEach(async (el) => {
+                if (el && el.tagName.toLowerCase().indexOf('component-') !== -1) {
+                    if (el.componentInstance) {
+                        el.componentInstance.postRender();
+                    }
+                }
+            });
         }
     }
 
