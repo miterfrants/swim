@@ -20,10 +20,10 @@ export const Router = {
     init: (context) => {
         window.addEventListener('popstate', async () => {
             const newPath = location.pathname + location.search;
-            const exitResult = await Router.exit(window.AppPreviousState, newPath, RoutingRule, context);
+            const exitResult = await Router.exit(window.SwimAppPreviousState, newPath, RoutingRule, context);
             if (exitResult) {
-                Router.routing(window.AppPreviousState, newPath, RoutingRule, context);
-                window.AppPreviousState = newPath; // eslint-disable-line
+                Router.routing(window.SwimAppPreviousState, newPath, RoutingRule, context);
+                window.SwimAppPreviousState = newPath; // eslint-disable-line
             } else {
                 history.go(1);
             }
@@ -33,7 +33,7 @@ export const Router = {
             history.pushState = async function (data, title, newPath) {
                 const exitResult = await Router.exit(location.pathname + location.search, newPath, RoutingRule, context);
                 if (exitResult) {
-                    window.AppPreviousState = newPath;
+                    window.SwimAppPreviousState = newPath;
                     Router.routing(location.pathname + location.search, newPath, RoutingRule, context);
                     return original.apply(this, arguments);
                 }
@@ -44,7 +44,7 @@ export const Router = {
             history.replaceState = async function (data, title, newPath) {
                 const exitResult = await Router.exit(location.pathname + location.search, newPath, RoutingRule, context);
                 if (exitResult) {
-                    window.AppPreviousState = newPath;
+                    window.SwimAppPreviousState = newPath;
                     Router.routing(location.pathname + location.search, newPath, RoutingRule, context);
                     return original.apply(this, arguments);
                 }
@@ -52,7 +52,7 @@ export const Router = {
         })(history.replaceState);
 
         Router.routing('', location.pathname + location.search, RoutingRule, context);
-        window.AppPreviousState = location.pathname + location.search;
+        window.SwimAppPreviousState = location.pathname + location.search;
 
         // overwrite link tag original behavior
         document.querySelectorAll('a').forEach((el) => {
