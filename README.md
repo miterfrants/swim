@@ -1,6 +1,6 @@
 # Features
 - no need to wait bundle & build in dev mode
-- base on es module & vanilla js
+- base on es module & es6
 - bundle and build by webpack4 for production
 
 # Initial Swim Project
