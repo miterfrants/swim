@@ -388,7 +388,7 @@ function setupContextArgs(argsReference, args, controllerId) {
         window.SwimAppControllersAndArgsMapping[controllerId] = [];
     }
     for (const key in args) {
-        argsReference[key] = args[key];
+        argsReference[key] = decodeURIComponent(args[key]);
         if (window.SwimAppControllersAndArgsMapping[controllerId].indexOf(key) === -1) {
             window.SwimAppControllersAndArgsMapping[controllerId].push(key);
         }
