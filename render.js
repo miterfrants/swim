@@ -237,7 +237,11 @@ export const Render = {
                         elItem.setAttribute('variable', newVariableAttribute);
                     }
                 }
-                Render.bindingVariableToDom(controller, elItem, variable[i], args);
+                Render.bindingVariableToDom(controller, elItem, {
+                    ...variable[i],
+                    index: i,
+                    postiveIndex: i + 1
+                }, args);
                 if (elContainer.tagName === 'SELECT' && elContainer.hasAttribute('value')) {
                     if (elItem.value === elContainer.getAttribute('value')) {
                         elItem.setAttribute('selected', '');
