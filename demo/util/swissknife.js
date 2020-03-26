@@ -314,69 +314,49 @@ export const Swissknife = {
         }
         return result.join('');
     },
-    formatCadasterNo: (elRoot, selector) => {
-        elRoot.querySelectorAll(selector).forEach((elInput) => {
-            let timer = null;
-            elInput.addEventListener('keyup', (e) => {
-                const elCurrentTarget = e.currentTarget;
-                clearTimeout(timer);
-                timer = setTimeout(() => {
-                    const array = elCurrentTarget.value.split('-');
-                    if (array.length === 1) {
-                        if (Number.isNaN(Number(array[0]))) {
-                            return;
-                        }
-                        if (array[0].replace(/ /gi, '').length > 4) {
-                            return;
-                        }
-                        elCurrentTarget.value = `${Swissknife.paddingLeft(array[0].replace(/ /gi, ''),4,'0')}-0000`;
-                    } else if (array.length === 2) {
-                        for (let i = 0; i < array.length; i++) {
-                            if (Number.isNaN(Number(array[0]))) {
-                                return;
-                            }
-                            if (array[i].replace(/ /gi, '').length > 4) {
-                                return;
-                            }
-                        }
-                        elCurrentTarget.value = `${Swissknife.paddingLeft(array[0].replace(/ /gi, ''),4,'0')}-${Swissknife.paddingLeft(array[1].replace(/ /gi, ''),4,'0')}`;
-                    }
-                }, 800);
-            });
-        });
+    convertQueryStringToVariable: (queryString) => {
+        if(queryString.indexOf('?') !==-1){
+            queryString = queryString.substring(queryString.indexOf('?')+1);
+        }
+        let tempResult = queryString.split('&');
+        let result = {};
+        for(let i =0 ;i<tempResult.length;i++){
+            const queryStringItem = tempResult[i].split('=');
+            const key = queryStringItem[0];
+            if(queryStringItem[1]){
+                const value = queryStringItem[1];
+                result[key] = value;
+            } else {
+                result[key] = '';
+            }
+        }
+        return result;
     },
-    formatBuildingNo: (elRoot, selector) => {
-        elRoot.querySelectorAll(selector).forEach((elInput) => {
-            let timer = null;
-            elInput.addEventListener('keyup', (e) => {
-                const elCurrentTarget = e.currentTarget;
-                clearTimeout(timer);
-                timer = setTimeout(() => {
-                    const array = elCurrentTarget.value.split('-');
-                    if (array.length === 1) {
-                        if (Number.isNaN(Number(array[0]))) {
-                            return;
-                        }
-                        if (array[0].replace(/ /gi, '').length > 5) {
-                            return;
-                        }
-                        elCurrentTarget.value = `${Swissknife.paddingLeft(array[0].replace(/ /gi, ''),5,'0')}-000`;
-                    } else if (array.length === 2) {
-                        for (let i = 0; i < array.length; i++) {
-                            if (Number.isNaN(Number(array[0]))) {
-                                return;
-                            }
-                            if (i === 0 && array[i].replace(/ /gi, '').length > 5) {
-                                return;
-                            }
-                            if (i === 1 && array[i].replace(/ /gi, '').length > 3) {
-                                return;
-                            }
-                        }
-                        elCurrentTarget.value = `${Swissknife.paddingLeft(array[0].replace(/ /gi, ''),5,'0')}-${Swissknife.paddingLeft(array[1].replace(/ /gi, ''),3,'0')}`;
-                    }
-                }, 800);
-            });
-        });
+    appendQueryString: (url, key, value)=> {
+        let urlPrefix = url;
+        const questionSignPosition = url.indexOf('?');
+        if(questionSignPosition!==-1){
+            urlPrefix = url.substring(0, questionSignPosition);
+            let queryString = url.substring(questionSignPosition+1);
+            const queryStringObj = Swissknife.convertQueryStringToVariable(queryString);
+            queryStringObj[key] = value;
+            return urlPrefix + '?' + Swissknife.convertVariableToQueryString(queryStringObj);
+        }
+        return `${url}?${key}=${value}`;
+    },
+    removeUndefinedPropertyTemplateString: (variable, template) => {
+        const regex = /({[\w|-|_]+})/g;
+        let m;
+        let newTemplate = template;
+        while ((m = regex.exec(template)) !== null) {
+            if (m.index === regex.lastIndex) {
+                regex.lastIndex++;
+            }
+            const variableKey = m[0].substring(1,m[0].length-1);
+            if(variable[variableKey] === undefined){
+                newTemplate =newTemplate.replace(new RegExp(m[0],'gi'),'');
+            }
+        }
+        return newTemplate;
     }
 };

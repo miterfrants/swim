@@ -171,7 +171,7 @@ export const Router = {
 
             // prepare context args from url
             const variableFromURL = Router.extractVariableFromUrl(routingRule.path, pathFragment, regexp);
-            setupContextArgs(context.args, variableFromURL, routingRule.controller.id);
+            setupContextArgs(context.args, variableFromURL, routingRule.controller.id, true);
 
             // prepare context args from routing rule
             let somethingWrongInPrepareData = false;
@@ -340,9 +340,10 @@ export const Router = {
             }
         }
         // 怎麼記得 location.search -> currentPath 現在好像又改回 currentPath;
-        if (location.search !== '?' && currentPath.indexOf('?') === -1) {
-            currentPath += location.search;
-        }
+        // currentPath 會有 queryString 不知道為什麼這裡要這樣處理
+        // if (location.search !== '?' && currentPath.indexOf('?') === -1) {
+        //     currentPath += location.search;
+        // }
         if (arrayRoutingPath.length === 2 && currentPath.indexOf('?') !== -1) {
             const arrayQueryStringFromRouting = arrayRoutingPath[1].split('&');
             const arrayQueryStringFromCurrentPath = currentPath.split('?')[1].split('&');
@@ -383,12 +384,17 @@ export const Router = {
     }
 };
 
-function setupContextArgs(argsReference, args, controllerId) {
+function setupContextArgs(argsReference, args, controllerId, isVariableFromUri) {
     if (!window.SwimAppControllersAndArgsMapping[controllerId]) {
         window.SwimAppControllersAndArgsMapping[controllerId] = [];
     }
     for (const key in args) {
-        argsReference[key] = decodeURIComponent(args[key]);
+        if(isVariableFromUri){
+            argsReference[key] = decodeURIComponent(args[key]);
+        } else {
+            argsReference[key] = args[key];
+        }
+        
         if (window.SwimAppControllersAndArgsMapping[controllerId].indexOf(key) === -1) {
             window.SwimAppControllersAndArgsMapping[controllerId].push(key);
         }

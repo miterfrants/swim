@@ -185,6 +185,20 @@ export const Render = {
 
             let timer = null;
             if (loopRenderContainers.length > 0) {
+                variable[propertyName].push = (item) => {
+                    Array.prototype.push.apply(variable[propertyName], [item]);
+                    clearTimeout(timer);
+                    timer = setTimeout(async () => {
+                        for (let i = 0; i < loopRenderContainers.length; i++) {
+                            Render._renderSwimForMain(loopRenderContainers[i], variable[propertyName], controller, args);
+                            Render.bindingVariableToDom(controller, loopRenderContainers[i], variable, args);
+                            Render.bindingEvent(loopRenderContainers[i], controller);
+                            await Render.renderComponentAsync(loopRenderContainers[i], variable, args, controller);
+                        }
+                    });
+                    return variable[propertyName];
+                };
+
                 variable[propertyName].unshift = (item) => {
                     Array.prototype.unshift.apply(variable[propertyName], [item]);
                     clearTimeout(timer);
@@ -200,7 +214,7 @@ export const Render = {
                 };
 
                 variable[propertyName].splice = (index, number) => {
-                    Array.prototype.splice.apply(variable[propertyName], [index, number]);
+                    const result = Array.prototype.splice.apply(variable[propertyName], [index, number]);
                     clearTimeout(timer);
                     timer = setTimeout(async () => {
                         for (let i = 0; i < loopRenderContainers.length; i++) {
@@ -210,7 +224,7 @@ export const Render = {
                             await Render.renderComponentAsync(loopRenderContainers[i], variable, args, controller);
                         }
                     });
-                    return variable[propertyName];
+                    return result;
                 };
             }
         }
@@ -253,6 +267,44 @@ export const Render = {
     },
     // todo: refactor duplicate code
     bindingEvent: (elRoot, controller) => {
+        elRoot.querySelectorAll('[onmouseover^="controller."]').forEach((el) => {
+            const stringOfFuncNames = el.getAttribute('onmouseover').split(',');
+            for (let i = 0; i < stringOfFuncNames.length; i++) {
+                const funcName = stringOfFuncNames[i].replace('controller.', '');
+                if (controller[funcName]) {
+                    el.addEventListener('mouseover', (e) => {
+                        controller[funcName](e);
+                    });
+                    el.removeAttribute('onmouseover');
+                }
+            }
+        });
+        elRoot.querySelectorAll('[onload^="controller."]').forEach((el) => {
+            const stringOfFuncNames = el.getAttribute('onload').split(',');
+            for (let i = 0; i < stringOfFuncNames.length; i++) {
+                const funcName = stringOfFuncNames[i].replace('controller.', '');
+                if (controller[funcName]) {
+                    el.addEventListener('load', (e) => {
+                        controller[funcName](e);
+                    });
+                    el.removeAttribute('onload');
+                }
+            }
+        });
+
+        elRoot.querySelectorAll('[onmouseout^="controller."]').forEach((el) => {
+            const stringOfFuncNames = el.getAttribute('onmouseout').split(',');
+            for (let i = 0; i < stringOfFuncNames.length; i++) {
+                const funcName = stringOfFuncNames[i].replace('controller.', '');
+                if (controller[funcName]) {
+                    el.addEventListener('mouseout', (e) => {
+                        controller[funcName](e);
+                    });
+                    el.removeAttribute('onmouseout');
+                }
+            }
+        });
+
         elRoot.querySelectorAll('[onclick^="controller."]').forEach((el) => {
             const stringOfFuncNames = el.getAttribute('onclick').split(',');
             for (let i = 0; i < stringOfFuncNames.length; i++) {
@@ -361,7 +413,7 @@ export const Render = {
         return variable[variableBindingComponentKey];
     },
     _refreshElementAttributeWithVariable(el, propertyName, newValue) {
-        let attrNames = el.getAttributeNames();
+        let attrNames =  el.getAttributeNames();
         for (let j = 0; j < attrNames.length; j++) {
             const attrName = attrNames[j];
             let attrValue = el.originalAttribute[attrName];
@@ -474,7 +526,9 @@ export const Render = {
                                     bindingElements[i].ref.setAttribute(newValue, '');
                                 }
                             } else if (bindingElements[i].type === 'attribute') {
-                                Render._refreshElementAttributeWithVariable(bindingElements[i].ref, propertyName, newValue);
+                                if( bindingElements[i].ref instanceof Element || bindingElements[i].ref instanceof HTMLDocument){
+                                    Render._refreshElementAttributeWithVariable(bindingElements[i].ref, propertyName, newValue);
+                                }
                             } else if (bindingElements[i].type === 'textnode') {
                                 if (variableObj[propertyName] === null || variableObj[propertyName] === undefined) {
                                     bindingElements[i].ref.textContent = bindingElements[i].ref.template.replace(`{${propertyName}}`, '');
