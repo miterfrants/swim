@@ -163,7 +163,7 @@ export const Router = {
             const pathFragment = routingPath.pathFragment;
             const regexp = routingPath.regexp;
             const routingRule = routingPath.matchRoutingRule;
-
+            
             // get parent controller
             const currentRoutingPathIndex = currentRoutingPathArray.indexOf(routingPath);
             const parentController = currentRoutingPathIndex == 0 ? null : currentRoutingPathArray[currentRoutingPathIndex - 1].matchRoutingRule.controller;
@@ -264,6 +264,7 @@ export const Router = {
         } else {
             controllerInstance = instances[0];
         }
+
         window.AppCurrentController = controllerInstance; // eslint-disable-line
         if (!skipControllerLiveTimeCycle) {
             if (!context.isServerSideRender) { // client side only
@@ -311,7 +312,7 @@ export const Router = {
         for (let j = 0; j < arrayOfPath.length; j++) {
             if (arrayOfPath[j].substring(0, 1) === '{') {
                 arrayUrlParams.push(arrayOfPath[j].replace(/{/gi, '').replace(/}/gi, ''));
-                arrayRegString.push('([0-9|a-z|A-Z|_|-|{|}]+)');
+                arrayRegString.push('([0-9a-zA-Z_\\-\\}\\{]+)');
             } else {
                 arrayRegString.push(arrayOfPath[j]);
             }
@@ -328,8 +329,7 @@ export const Router = {
         const keys = routingPath.match(regexp);
         const values = Array.isArray(currentPath) ? currentPath.join('/').match(regexp) : currentPath.match(regexp);
         const args = {};
-        if (keys !== undefined && keys.length > 1 && keys.length === values.length) {
-
+        if (keys !== null && keys !== undefined && keys.length > 1 && keys.length === values.length) {
             for (let j = 1; j < keys.length; j++) {
                 if (keys[j] === undefined) {
                     continue;

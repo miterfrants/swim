@@ -3,7 +3,7 @@ import {
 } from './render.js';
 
 export class RoutingController {
-    constructor(elHTML, parentController, args, context) {
+    constructor (elHTML, parentController, args, context) {
         this.args = args;
         this.elHTML = elHTML;
         this.originalHTML = elHTML ? elHTML.outerHTML : ''; // restore html string;
@@ -32,11 +32,11 @@ export class RoutingController {
         }
     }
 
-    async enter(args) {
+    async enter (args) {
         this.args = args;
     }
 
-    async render(pageVariable) {
+    async render (pageVariable) {
         this.pageVariable = pageVariable;
         if (this.elHTML && this.context.isUpdateDOMFirstRunRouting) {
             revertOriginalChildRouter(this);
@@ -62,7 +62,7 @@ export class RoutingController {
         }
     }
 
-    async postRender() {
+    async postRender () {
         if (this.elHTML) {
             Render.bindingEvent(this.elHTML, this);
         }
@@ -77,14 +77,14 @@ export class RoutingController {
         }
     }
 
-    async exit() {
+    async exit () {
         return true;
     }
 }
 
-function updateDOM(controllerInstance) {
+function updateDOM (controllerInstance) {
     let container = null;
-    let parentController = controllerInstance.parentController;
+    const parentController = controllerInstance.parentController;
     const elRoot = document.querySelector('.root');
     if (!parentController) {
         container = elRoot;
@@ -106,7 +106,7 @@ function updateDOM(controllerInstance) {
     }
 }
 
-function recrusiveFindConcreteParent(parentController) {
+function recrusiveFindConcreteParent (parentController) {
     if (parentController.elHTML !== null) {
         return parentController;
     } else if (parentController.parentController) {
@@ -116,7 +116,7 @@ function recrusiveFindConcreteParent(parentController) {
     }
 }
 
-function saveOriginalChildRouter(controllerInstance, sourceElHTML) {
+function saveOriginalChildRouter (controllerInstance, sourceElHTML) {
     // handle stylesheets avoid duplicate load css file
     const stylesheets = [];
     sourceElHTML.childNodes.forEach((el) => {
@@ -138,7 +138,7 @@ function saveOriginalChildRouter(controllerInstance, sourceElHTML) {
     }
 }
 
-function revertOriginalChildRouter(controllerInstance) {
+function revertOriginalChildRouter (controllerInstance) {
     const elChildRouter = controllerInstance.elHTML.querySelector('.child-router');
     if (elChildRouter) {
         elChildRouter.innerHTML = '';
