@@ -10,11 +10,11 @@ import {
     Render
 } from './render.js';
 
-window['SwimAppController'] = [];
-window['SwimAppControllersAndArgsMapping'] = {};
-window['SwimAppCurrentController'] = null;
-window['SwimAppStylesheet'] = window['SwimAppStylesheet'] || [];
-window['SwimAppPreviousState'] = [];
+window.SwimAppController = [];
+window.SwimAppControllersAndArgsMapping = {};
+window.SwimAppCurrentController = null;
+window.SwimAppStylesheet = window.SwimAppStylesheet || [];
+window.SwimAppPreviousState = [];
 
 export const Router = {
     init: (context) => {
@@ -70,7 +70,7 @@ export const Router = {
             }
         });
 
-        function overWriteLinkBehavior(e) {
+        function overWriteLinkBehavior (e) {
             var isMacLike = /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform);
             var isIOS = /(iPhone|iPod|iPad)/i.test(navigator.platform);
             var isWin = /(win32)/i.test(navigator.platform);
@@ -97,14 +97,12 @@ export const Router = {
                     return;
                 }
                 history.pushState({}, '', newPath);
-                return;
             }
-
         }
     },
     exit: async (previousPath, path, routers, context) => {
-        let currentRoutingPathArray = Router.getRoutingPathArray(path, routers);
-        let previousRoutingPathArray = Router.getRoutingPathArray(previousPath, routers);
+        const currentRoutingPathArray = Router.getRoutingPathArray(path, routers);
+        const previousRoutingPathArray = Router.getRoutingPathArray(previousPath, routers);
 
         // should be exit controller
         let differenceRoutinPathFromPrevious = previousRoutingPathArray.filter((routingPath) => {
@@ -133,8 +131,8 @@ export const Router = {
         if (!context.args) {
             context.args = {};
         }
-        let currentRoutingPathArray = Router.getRoutingPathArray(path, routers);
-        let previousRoutingPathArray = Router.getRoutingPathArray(previousPath, routers);
+        const currentRoutingPathArray = Router.getRoutingPathArray(path, routers);
+        const previousRoutingPathArray = Router.getRoutingPathArray(previousPath, routers);
 
         // should be enter controller
         let firstTimeDiffIndex = -1;
@@ -150,7 +148,7 @@ export const Router = {
             firstTimeDiffIndex = index;
             return true;
         });
-        // edge case: child routing rule to parent routing rule 
+        // edge case: child routing rule to parent routing rule
         if (
             differenceRoutinPathFromCurrent.length === 0 &&
             previousPath !== path
@@ -163,11 +161,15 @@ export const Router = {
             const pathFragment = routingPath.pathFragment;
             const regexp = routingPath.regexp;
             const routingRule = routingPath.matchRoutingRule;
-            
+
             // get parent controller
             const currentRoutingPathIndex = currentRoutingPathArray.indexOf(routingPath);
-            const parentController = currentRoutingPathIndex == 0 ? null : currentRoutingPathArray[currentRoutingPathIndex - 1].matchRoutingRule.controller;
+            const parentController = currentRoutingPathIndex === 0 ? null : currentRoutingPathArray[currentRoutingPathIndex - 1].matchRoutingRule.controller;
             const parentControllerInstance = Router.findControllerInstance(parentController);
+            if (parentControllerInstance && parentControllerInstance.elHTML) {
+                parentControllerInstance.elHTML.querySelector('.child-router').innerHTML = '<div class="spinner"><div></div><div></div><div></div><div></div></div>';
+                parentControllerInstance.elHTML.querySelector('.child-router').addClass('loading');
+            }
 
             // prepare context args from url
             const variableFromURL = Router.extractVariableFromUrl(routingRule.path, pathFragment, regexp);
@@ -205,6 +207,9 @@ export const Router = {
         }
         document.querySelectorAll('.child-router').forEach((el) => {
             el.style.visibility = '';
+        });
+        document.querySelectorAll('.loading').forEach((el) => {
+            el.removeClass('loading');
         });
         if (!context.isUpdateDOMFirstRunRouting) {
             let cursorIndex = 0;
@@ -254,7 +259,7 @@ export const Router = {
         let elHTML = null;
         if (instances.length === 0) {
             if (htmlPath) {
-                let loader = new Loader();
+                const loader = new Loader();
                 let html = await loader.loadHTML(htmlPath);
                 html = Render.appendStylesheetToHeadAndRemoveLoaded(html);
                 elHTML = html.toDom();
@@ -363,9 +368,9 @@ export const Router = {
         const results = [];
         let currentPath = path;
         let currentRoutingRules = routingRules;
-        let isEnd = path.length > 0 ? false : true;
+        let isEnd = !(path.length > 0);
         while (!isEnd) {
-            let matchRoutingRule = Router.findMatchRoute(currentPath, currentRoutingRules);
+            const matchRoutingRule = Router.findMatchRoute(currentPath, currentRoutingRules);
             let regexp = Router.buildRegExp(matchRoutingRule.path, isEnd);
             isEnd = matchRoutingRule.children === undefined || currentPath.split('?')[0].replace(regexp, '').length === 0;
             // re-generate regexp
@@ -384,27 +389,27 @@ export const Router = {
     }
 };
 
-function setupContextArgs(argsReference, args, controllerId, isVariableFromUri) {
+function setupContextArgs (argsReference, args, controllerId, isVariableFromUri) {
     if (!window.SwimAppControllersAndArgsMapping[controllerId]) {
         window.SwimAppControllersAndArgsMapping[controllerId] = [];
     }
     for (const key in args) {
-        if(isVariableFromUri){
+        if (isVariableFromUri) {
             argsReference[key] = decodeURIComponent(args[key]);
         } else {
             argsReference[key] = args[key];
         }
-        
+
         if (window.SwimAppControllersAndArgsMapping[controllerId].indexOf(key) === -1) {
             window.SwimAppControllersAndArgsMapping[controllerId].push(key);
         }
     }
 }
 
-function clearContextArgs(argsReference, controllerId) {
+function clearContextArgs (argsReference, controllerId) {
     const controllerArgs = window.SwimAppControllersAndArgsMapping[controllerId];
     for (let i = 0; i < controllerArgs.length; i++) {
-        let key = controllerArgs[i];
+        const key = controllerArgs[i];
         delete argsReference[key];
     }
 }

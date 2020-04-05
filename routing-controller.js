@@ -99,9 +99,6 @@ function updateDOM (controllerInstance) {
 
     if (container) {
         container.innerHTML = '';
-        if (controllerInstance.elHTML.querySelector('.child-router')) {
-            controllerInstance.elHTML.querySelector('.child-router').style.visibility = 'hidden';
-        }
         container.appendChild(controllerInstance.elHTML);
     }
 }
