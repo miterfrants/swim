@@ -50,5 +50,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "version": "1.0.0",
-  "devDependencies": {}
+  "devDependencies": {
+    "minimist": "^1.2.5"
+  }
 }
