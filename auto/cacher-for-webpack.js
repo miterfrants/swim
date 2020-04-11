@@ -1,11 +1,18 @@
 const fs = require('fs-extra');
+
+fs.copyFileSync(`./src/config.${process.env.NODE_ENV}.js`, './src/config.js');
+
+if(process.env.FORCE_UPDATE!=='true'){
+    if(fs.existsSync('./src/swim/cacher.js')){
+        return;
+    }
+}
+
 const components = fs.readdirSync('./src/components', {
     withFileTypes: true
 }).filter(dir => dir.isDirectory()).map((dir) => {
     return dir.name;
 });
-
-fs.copyFileSync(`./src/config.${process.env.NODE_ENV}.js`, './src/config.js');
 
 const template = fs.readdirSync('./src/template');
 const css = fs.readdirSync('./src/css').filter(filename => filename.endsWith('.css'));
@@ -24,6 +31,7 @@ const exportResult = `/* Auto Generate */
 {import}
 export const Cacher = {
     buildCache: () => {
+        window.APP_CONFIG = APP_CONFIG;
         window.SwimAppComponents = window.SwimAppComponents || [];
         window.SwimAppLoaderCache = window.SwimAppLoaderCache || [];
 {cache}
@@ -72,4 +80,7 @@ for (let i = 0; i < scss.length; i++) {
     cacheResult.push(`        window.SwimAppStylesheet.push('/css/${scss[i].replace(/.scss/gi,'.css')}');`);
     importResult.push(`import '../css/${scss[i]}';`);
 }
+
+// import config
+importResult.push('import { APP_CONFIG } from \'../config.j\';');
 fs.writeFileSync('./src/swim/cacher.js', exportResult.replace(/{import}/gi, importResult.join('\r')).replace(/{cache}/gi, cacheResult.join('\r')));
