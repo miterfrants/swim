@@ -82,5 +82,5 @@ for (let i = 0; i < scss.length; i++) {
 }
 
 // import config
-importResult.push('import { APP_CONFIG } from \'../config.j\';');
+importResult.push('import { APP_CONFIG } from \'../config.js\';');
 fs.writeFileSync('./src/swim/cacher.js', exportResult.replace(/{import}/gi, importResult.join('\r')).replace(/{cache}/gi, cacheResult.join('\r')));
