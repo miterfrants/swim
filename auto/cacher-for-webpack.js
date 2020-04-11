@@ -5,6 +5,8 @@ const components = fs.readdirSync('./src/components', {
     return dir.name;
 });
 
+fs.copyFileSync(`./src/config.${process.env.NODE_ENV}.js`, './src/config.js');
+
 const template = fs.readdirSync('./src/template');
 const css = fs.readdirSync('./src/css').filter(filename => filename.endsWith('.css'));
 const scss = fs.readdirSync('./src/css').filter(filename => filename.endsWith('.scss'));

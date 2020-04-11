@@ -15,7 +15,7 @@ require('./update-core.js');
 
 const package = fs.readJSONSync('package.json');
 package.scripts['swim-update'] = 'npm install https://github.com/miterfrants/swim.git && node node_modules/swim/auto/update-core.js';
-package.scripts['swim-build'] = 'node node_modules/swim/auto/cacher-for-webpack.js && npx webpack --config ./webpack.config.js';
+package.scripts['swim-build'] = 'node node_modules/swim/auto/cacher-for-webpack.js && npx webpack --config ./webpack.config.js && node node_modules/swim/auto/delete-config-after-webpack.js';
 fs.writeJSONSync('package.json', package, {
     spaces: 2,
     EOL: '\r\n'

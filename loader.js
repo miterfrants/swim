@@ -20,6 +20,19 @@ export class Loader {
         if (window.SwimAppLoaderCache[url]) {
             return window.SwimAppLoaderCache[url];
         }
+        if (window.SwimAppLoaderCache[url] === '') {
+            return new Promise((resolve, reject)=>{
+                const checkTemplate = () => {
+                    if (window.SwimAppLoaderCache[url] === '') {
+                        setTimeout(checkTemplate,10);
+                    } else {
+                        resolve(window.SwimAppLoaderCache[url]);
+                    }
+                }
+                checkTemplate();
+            })
+        }
+        window.SwimAppLoaderCache[url] = '';
         const resp = await fetch(url, {
             method: 'GET',
             headers: {
