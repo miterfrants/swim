@@ -52,32 +52,32 @@ for (let i = 0; i < components.length; i++) {
     let componentResult = componentTemplate.replace(/{ComponentSnakeCaseName}/gi, componentSnakeCaseName).replace(/{ComponentCamelCaseName}/gi, componentCamelCaseName);
     if (fs.existsSync(`./src/components/${componentSnakeCaseName}/${componentSnakeCaseName}.scss`)) {
         componentResult = componentResult.replace(/{css}/gi, `import '../components/${componentSnakeCaseName}/${componentSnakeCaseName}.scss'`);
-        cacheResult.push(`        window.SwimAppStylesheet.push('/components/${componentSnakeCaseName}/${componentSnakeCaseName}.css');`);
+        cacheResult.push(`        window.SwimAppStylesheet.push(\`\${APP_CONFIG.FRONT_END_PREFIX}/components/${componentSnakeCaseName}/${componentSnakeCaseName}.css\`);`);
     } else if (fs.existsSync(`./src/components/${componentSnakeCaseName}/${componentSnakeCaseName}.css`)) {
         componentResult = componentResult.replace(/{css}/gi, `import '../components/${componentSnakeCaseName}/${componentSnakeCaseName}.css'`);
-        cacheResult.push(`        window.SwimAppStylesheet.push('/components/${componentSnakeCaseName}/${componentSnakeCaseName}.css');`);
+        cacheResult.push(`        window.SwimAppStylesheet.push(\`\${APP_CONFIG.FRONT_END_PREFIX}/components/${componentSnakeCaseName}/${componentSnakeCaseName}.css\`);`);
     } else {
         componentResult = componentResult.replace(/{css};/gi, '');
     }
     importResult.push(componentResult);
 
-    cacheResult.push(`        window.SwimAppComponents['${componentCamelCaseName}Component'] = ${componentCamelCaseName}Component;`);
-    cacheResult.push(`        window.SwimAppLoaderCache['/components/${componentSnakeCaseName}/${componentSnakeCaseName}.html'] = ${componentCamelCaseName}HTML;`);
+    cacheResult.push(`        window.SwimAppComponents.${componentCamelCaseName}Component = ${componentCamelCaseName}Component;`);
+    cacheResult.push(`        window.SwimAppLoaderCache[\`\${APP_CONFIG.FRONT_END_PREFIX}/components/${componentSnakeCaseName}/${componentSnakeCaseName}.html\`] = ${componentCamelCaseName}HTML;`);
 }
 
 for (let i = 0; i < template.length; i++) {
     const fileNameWithoutExtend = snakeToCamel(template[i].split('.')[0]);
     importResult.push(`import ${fileNameWithoutExtend}HTML from '../template/${template[i]}';\r`);
-    cacheResult.push(`        window.SwimAppLoaderCache['/template/${template[i]}'] = ${fileNameWithoutExtend}HTML;`);
+    cacheResult.push(`        window.SwimAppLoaderCache[\`\${APP_CONFIG.FRONT_END_PREFIX}/template/${template[i]}\`] = ${fileNameWithoutExtend}HTML;`);
 }
 
 for (let i = 0; i < css.length; i++) {
-    cacheResult.push(`        window.SwimAppStylesheet.push('/css/${css[i]}');`);
+    cacheResult.push(`        window.SwimAppStylesheet.push(\`\${APP_CONFIG.FRONT_END_PREFIX}/css/${css[i]}\`);`);
     importResult.push(`import '../css/${css[i]}';`);
 }
 
 for (let i = 0; i < scss.length; i++) {
-    cacheResult.push(`        window.SwimAppStylesheet.push('/css/${scss[i].replace(/.scss/gi,'.css')}');`);
+    cacheResult.push(`        window.SwimAppStylesheet.push(\`\${APP_CONFIG.FRONT_END_PREFIX}/css/${scss[i].replace(/.scss/gi,'.css')}\`);`);
     importResult.push(`import '../css/${scss[i]}';`);
 }
 
