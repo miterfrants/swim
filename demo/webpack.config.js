@@ -4,7 +4,7 @@ const CopyPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const FixStyleOnlyEntriesPlugin = require('webpack-fix-style-only-entries');
 const TerserJSPlugin = require('terser-webpack-plugin');
-const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 const webpack = require('webpack');
 const {
     CleanWebpackPlugin
@@ -18,7 +18,10 @@ module.exports = {
         publicPath: '/'
     },
     optimization: {
-        minimizer: [new TerserJSPlugin({})],
+        minimizer: [
+            new TerserJSPlugin({}),
+            new CssMinimizerPlugin()
+        ],
     },
     module: {
         rules: [{
@@ -45,7 +48,7 @@ module.exports = {
         }],
     },
     plugins: [
-        new OptimizeCSSAssetsPlugin({}),
+        new MiniCssExtractPlugin(),
         new CleanWebpackPlugin(),
         new FixStyleOnlyEntriesPlugin(),
         new MiniCssExtractPlugin({
