@@ -17,8 +17,12 @@ window.SwimAppStylesheet = window.SwimAppStylesheet || [];
 window.SwimAppPreviousState = [];
 
 export const Router = {
+    pauseRouting: false,
     init: (context) => {
         window.addEventListener('popstate', async () => {
+            if (Router.pauseRouting) {
+                return;
+            }
             const newPath = location.pathname + location.search;
             const exitResult = await Router.exit(window.SwimAppPreviousState, newPath, RoutingRule, context);
             if (exitResult) {
@@ -30,7 +34,11 @@ export const Router = {
         });
 
         (function (original) {
+            history.originalPushState = history.pushState;
             history.pushState = async function (data, title, newPath) {
+                if (Router.pauseRouting) {
+                    return;
+                }
                 const exitResult = await Router.exit(location.pathname + location.search, newPath, RoutingRule, context);
                 if (exitResult) {
                     window.SwimAppPreviousState = newPath;
@@ -42,6 +50,9 @@ export const Router = {
 
         (function (original) {
             history.replaceState = async function (data, title, newPath) {
+                if (Router.pauseRouting) {
+                    return;
+                }
                 const exitResult = await Router.exit(location.pathname + location.search, newPath, RoutingRule, context);
                 if (exitResult) {
                     window.SwimAppPreviousState = newPath;
@@ -60,6 +71,9 @@ export const Router = {
         });
 
         document.addEventListener('DOMNodeInserted', (e) => {
+            if (e.target && e.target.classList && e.target.classList.contains('skip-swim-router')) {
+                return;
+            }
             if (e.target.tagName === 'A') {
                 const htmlElement = e.target;
                 htmlElement.addEventListener('click', overWriteLinkBehavior);
@@ -107,7 +121,7 @@ export const Router = {
         // should be exit controller
         let differenceRoutinPathFromPrevious = previousRoutingPathArray.filter((routingPath) => {
             for (let i = 0; i < currentRoutingPathArray.length; i++) {
-                if (routingPath.pathFragment === currentRoutingPathArray[i].pathFragment) {
+                if (routingPath.fullPath === currentRoutingPathArray[i].fullPath) {
                     return false;
                 }
             }
@@ -141,7 +155,7 @@ export const Router = {
                 return true;
             }
             for (let i = 0; i < previousRoutingPathArray.length; i++) {
-                if (routingPath.pathFragment === previousRoutingPathArray[i].pathFragment) {
+                if (routingPath.fullPath === previousRoutingPathArray[i].fullPath) {
                     return false;
                 }
             }
@@ -169,6 +183,20 @@ export const Router = {
             if (parentControllerInstance && parentControllerInstance.elHTML) {
                 parentControllerInstance.elHTML.querySelector('.child-router').innerHTML = '<div class="spinner"><div></div><div></div><div></div><div></div></div>';
                 parentControllerInstance.elHTML.querySelector('.child-router').addClass('loading');
+                const elChildRouter = parentControllerInstance.elHTML.querySelector('.child-router');
+                if (elChildRouter) {
+                    elChildRouter.getAttributeNames().forEach((attrName) => {
+                        if (attrName.indexOf('on-') === 0) {
+                            const funcName = elChildRouter.getAttribute(attrName).replace(/controller\./gi, '');
+
+                            if (parentControllerInstance[funcName]) {
+                                parentControllerInstance.elHTML.addEventListener(attrName.replace(/^on-/gi, ''), (e) => {
+                                    parentControllerInstance[funcName](e);
+                                });
+                            }
+                        }
+                    });
+                }
             }
 
             // prepare context args from url
@@ -295,14 +323,16 @@ export const Router = {
             const tempArgs = {
                 ...args
             };
-            for (let i = 0; i < prepareFuncs.length; i++) {
-                const prepareData = await prepareFuncs[i].func(tempArgs);
-                if (prepareData === null || prepareData === undefined) {
-                    somethingWrongInPrepareData = true;
+            if (prepareFuncs && prepareFuncs.length > 0) {
+                for (let i = 0; i < prepareFuncs.length; i++) {
+                    const prepareData = await prepareFuncs[i].func(tempArgs);
+                    if (prepareData === null || prepareData === undefined) {
+                        somethingWrongInPrepareData = true;
+                    }
+                    const key = prepareFuncs[i].key;
+                    tempArgs[key] = prepareData;
+                    data[key] = prepareData;
                 }
-                const key = prepareFuncs[i].key;
-                tempArgs[key] = prepareData;
-                data[key] = prepareData;
             }
             resolve({
                 somethingWrongInPrepareData,
@@ -369,6 +399,7 @@ export const Router = {
         let currentPath = path;
         let currentRoutingRules = routingRules;
         let isEnd = !(path.length > 0);
+        let fullPath = '';
         while (!isEnd) {
             const matchRoutingRule = Router.findMatchRoute(currentPath, currentRoutingRules);
             let regexp = Router.buildRegExp(matchRoutingRule.path, isEnd);
@@ -377,7 +408,9 @@ export const Router = {
             if (isEnd) {
                 regexp = Router.buildRegExp(matchRoutingRule.path, isEnd);
             }
+            fullPath += currentPath.match(regexp)[0];
             results.push({
+                fullPath,
                 pathFragment: currentPath.match(regexp)[0],
                 matchRoutingRule,
                 regexp

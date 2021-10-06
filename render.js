@@ -1,16 +1,8 @@
 import {
     Loader
 } from './loader.js';
+import { APP_CONFIG } from '../config.js';
 export const Render = {
-    level: 0,
-    debug: (info) => {
-        let prefix = '';
-        const alignment = '----';
-        for (let i = 0; i < Render.level; i++) {
-            prefix += alignment;
-        }
-        // console.log(`${prefix}${info}`);
-    },
     renderComponentAsync: async (elHTML, pageVariable, args, controller) => {
         elHTML.querySelectorAll('*').forEach(async (el) => {
             if (el && el.tagName.toLowerCase().indexOf('component-') !== -1) {
@@ -59,7 +51,7 @@ export const Render = {
                         variable[variableNameInComponent] = value;
                         variableMapping.push({
                             variableRef: variableRef,
-                            variableKey: newVariableName,
+                            variableKey: newVariableName.lastIndexOf('.') !== -1 ? newVariableName.substring(newVariableName.lastIndexOf('.') + 1) : newVariableName,
                             variableKeyInComponent: variableNameInComponent
                         });
                     } else if (attrPrefix === 'attr') {
@@ -67,19 +59,19 @@ export const Render = {
                     }
                 }
 
-                let componentClass;
+                let ComponentClass;
                 try {
                     if (window.SwimAppComponents && window.SwimAppComponents[componentInfo.moduleName]) {
-                        componentClass = window.SwimAppComponents[componentInfo.moduleName];
+                        ComponentClass = window.SwimAppComponents[componentInfo.moduleName];
                     } else {
                         const loader = new Loader();
-                        componentClass = await loader.loadJS(componentInfo.url, componentInfo.moduleName);
+                        ComponentClass = await loader.loadJS(componentInfo.url, componentInfo.moduleName);
                     }
                 } catch (error) {
                     console.error(`${componentInfo.moduleName} module name wrong`);
                 }
 
-                const componentInstance = new componentClass(el, variable, args);
+                const componentInstance = new ComponentClass(el, variable, args);
                 for (let i = 0; i < variableMapping.length; i++) {
                     Render.registComponentToVariable(variableMapping[i].variableRef, variableMapping[i].variableKey, componentInstance, variableMapping[i].variableKeyInComponent);
                 }
@@ -89,7 +81,7 @@ export const Render = {
                     if (attrName.indexOf('on-') === 0) {
                         const funcName = el.getAttribute(attrName).replace(/controller\./gi, '');
                         if (controller[funcName]) {
-                            componentInstance.elHTML.addEventListener(attrName.replace(/on-/gi, ''), (e) => {
+                            componentInstance.elHTML.addEventListener(attrName.replace(/^on-/gi, ''), (e) => {
                                 controller[funcName](e);
                             });
                         }
@@ -154,13 +146,13 @@ export const Render = {
     },
     _getValueFromJsonPath (jsonData, path) {
         if (!(jsonData instanceof Object) || typeof (path) === 'undefined') {
-            throw 'Not valid argument:jsonData:' + jsonData + ', path:' + path;
+            throw new Error('Not valid argument:jsonData:' + jsonData + ', path:' + path);
         }
         path = path.replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
         path = path.replace(/^\./, ''); // strip a leading dot
-        var pathArray = path.split('.');
-        for (var i = 0, n = pathArray.length; i < n; ++i) {
-            var key = pathArray[i];
+        const pathArray = path.split('.');
+        for (let i = 0, n = pathArray.length; i < n; ++i) {
+            const key = pathArray[i];
             if (key in jsonData) {
                 if (jsonData[key] !== null) {
                     jsonData = jsonData[key];
@@ -209,7 +201,9 @@ export const Render = {
             const loopRenderContainers = [];
             elRoot.querySelectorAll(`[swim-for="${propertyName}"],[swim-for$="in ${propertyName}"]`).forEach((elContainer) => {
                 loopRenderContainers.push(elContainer);
-                Render._renderSwimForMain(elContainer, variable[propertyName], controller, args);
+                const swimForAttribute = elContainer.getAttribute('swim-for');
+                const nextLevelKey = swimForAttribute.indexOf(` in ${propertyName}`) !== -1 ? swimForAttribute.replace(` in ${propertyName}`, '') : null;
+                Render._renderSwimForMain(elContainer, variable[propertyName], controller, args, nextLevelKey);
             });
 
             let timer = null;
@@ -219,7 +213,9 @@ export const Render = {
                     clearTimeout(timer);
                     timer = setTimeout(async () => {
                         for (let i = 0; i < loopRenderContainers.length; i++) {
-                            Render._renderSwimForMain(loopRenderContainers[i], variable[propertyName], controller, args);
+                            const swimForAttribute = loopRenderContainers[0].getAttribute('swim-for');
+                            const nextLevelKey = swimForAttribute.indexOf(` in ${propertyName}`) !== -1 ? swimForAttribute.replace(` in ${propertyName}`, '') : null;
+                            Render._renderSwimForMain(loopRenderContainers[i], variable[propertyName], controller, args, nextLevelKey);
                             Render.bindingVariableToDom(controller, loopRenderContainers[i], variable, args);
                             Render.bindingEvent(loopRenderContainers[i], controller);
                             await Render.renderComponentAsync(loopRenderContainers[i], variable, args, controller);
@@ -233,7 +229,9 @@ export const Render = {
                     clearTimeout(timer);
                     timer = setTimeout(async () => {
                         for (let i = 0; i < loopRenderContainers.length; i++) {
-                            Render._renderSwimForMain(loopRenderContainers[i], variable[propertyName], controller, args);
+                            const swimForAttribute = loopRenderContainers[0].getAttribute('swim-for');
+                            const nextLevelKey = swimForAttribute.indexOf(` in ${propertyName}`) !== -1 ? swimForAttribute.replace(` in ${propertyName}`, '') : null;
+                            Render._renderSwimForMain(loopRenderContainers[i], variable[propertyName], controller, args, nextLevelKey);
                             Render.bindingVariableToDom(controller, loopRenderContainers[i], variable, args);
                             Render.bindingEvent(loopRenderContainers[i], controller);
                             await Render.renderComponentAsync(loopRenderContainers[i], variable, args, controller);
@@ -247,7 +245,25 @@ export const Render = {
                     clearTimeout(timer);
                     timer = setTimeout(async () => {
                         for (let i = 0; i < loopRenderContainers.length; i++) {
-                            Render._renderSwimForMain(loopRenderContainers[i], variable[propertyName], controller, args);
+                            const swimForAttribute = loopRenderContainers[0].getAttribute('swim-for');
+                            const nextLevelKey = swimForAttribute.indexOf(` in ${propertyName}`) !== -1 ? swimForAttribute.replace(` in ${propertyName}`, '') : null;
+                            Render._renderSwimForMain(loopRenderContainers[i], variable[propertyName], controller, args, nextLevelKey);
+                            Render.bindingVariableToDom(controller, loopRenderContainers[i], variable, args);
+                            Render.bindingEvent(loopRenderContainers[i], controller);
+                            await Render.renderComponentAsync(loopRenderContainers[i], variable, args, controller);
+                        }
+                    });
+                    return result;
+                };
+
+                variable[propertyName].sort = (sortFunc) => {
+                    const result = Array.prototype.sort.apply(variable[propertyName], [sortFunc]);
+                    clearTimeout(timer);
+                    timer = setTimeout(async () => {
+                        for (let i = 0; i < loopRenderContainers.length; i++) {
+                            const swimForAttribute = loopRenderContainers[0].getAttribute('swim-for');
+                            const nextLevelKey = swimForAttribute.indexOf(` in ${propertyName}`) !== -1 ? swimForAttribute.replace(` in ${propertyName}`, '') : null;
+                            Render._renderSwimForMain(loopRenderContainers[i], variable[propertyName], controller, args, nextLevelKey);
                             Render.bindingVariableToDom(controller, loopRenderContainers[i], variable, args);
                             Render.bindingEvent(loopRenderContainers[i], controller);
                             await Render.renderComponentAsync(loopRenderContainers[i], variable, args, controller);
@@ -258,13 +274,16 @@ export const Render = {
             }
         }
     },
-    _renderSwimForMain: async (elContainer, variable, controller, args) => {
-        const itemTemplate = elContainer.template || elContainer.innerHTML;
-        elContainer.template = itemTemplate;
-        elContainer.innerHTML = '';
+    _renderSwimForMain: async (elContainer, variable, controller, args, nextLevelKey) => {
         if (Array.isArray(variable)) {
+            const itemTemplate = elContainer.template || elContainer.innerHTML;
+            elContainer.template = itemTemplate;
+            elContainer.innerHTML = '';
             for (let i = 0; i < variable.length; i++) {
                 const elItem = itemTemplate.toDom();
+                if (nextLevelKey) {
+                    Render._renderSwimForMain(elItem.querySelector(`[swim-for$="in ${nextLevelKey}"]`), variable[i], controller, args);
+                }
                 if (elContainer.getAttribute('swim-for').indexOf(' in ') !== -1) {
                     const variableAs = elContainer.getAttribute('swim-for').split(' in ')[0];
                     const replacement = new RegExp(variableAs, 'g');
@@ -274,6 +293,9 @@ export const Render = {
                             let newVariableAttribute = null;
                             const attrNames = el.getAttributeNames();
                             for (let j = 0; j < attrNames.length; j++) {
+                                if (attrNames[j] === 'class') {
+                                    continue;
+                                }
                                 newVariableAttribute = el.getAttribute(attrNames[j]).replace(replacement, `${elContainer.getAttribute('swim-for').split(' in ')[1]}[${i}]`);
                                 el.setAttribute(attrNames[j], newVariableAttribute);
                             }
@@ -283,6 +305,9 @@ export const Render = {
                         let newVariableAttribute = null;
                         const attrNames = elItem.getAttributeNames();
                         for (let j = 0; j < attrNames.length; j++) {
+                            if (attrNames[j] === 'class') {
+                                continue;
+                            }
                             newVariableAttribute = elItem.getAttribute(attrNames[j]).replace(replacement, `${elContainer.getAttribute('swim-for').split(' in ')[1]}[${i}]`);
                             elItem.setAttribute(attrNames[j], newVariableAttribute);
                         }
@@ -296,7 +321,15 @@ export const Render = {
                         elItem.setAttribute('selected', '');
                     }
                 }
-                elContainer.appendChild(elItem);
+                if (
+                    (elContainer.tagName.toLowerCase() === 'tbody' && elItem.tagName.toLowerCase() === 'tbody')
+                ) {
+                    elItem.childNodes.forEach((item) => {
+                        elContainer.appendChild(item);
+                    });
+                } else {
+                    elContainer.appendChild(elItem);
+                }
             }
         } else {
             console.warn('loop variable is not array');
@@ -384,6 +417,17 @@ export const Render = {
                     controller[funcName](e);
                 });
                 el.removeAttribute('onkeydown');
+            }
+        });
+
+        elRoot.querySelectorAll('[onfocus^="controller."]').forEach((el) => {
+            const stringOfFuncNames = el.getAttribute('onfocus').split(',');
+            for (let i = 0; i < stringOfFuncNames.length; i++) {
+                const funcName = stringOfFuncNames[i].replace('controller.', '');
+                el.addEventListener('focus', (e) => {
+                    controller[funcName](e);
+                });
+                el.removeAttribute('onfocus');
             }
         });
 
@@ -534,6 +578,10 @@ export const Render = {
             const elementsWithText = [];
             el = query.iterateNext();
             while (el) {
+                if (el.parentElement.hasAttribute('unsafe-html') && el.parentElement.hasClass('has-binded')) {
+                    el = query.iterateNext();
+                    continue;
+                }
                 elementsWithText.push(el);
                 el = query.iterateNext();
             }
@@ -545,7 +593,12 @@ export const Render = {
                 if (variableObj[propertyName] === null || variableObj[propertyName] === undefined) {
                     el.textContent = el.template.replace(`{${propertyName}}`, '');
                 } else {
-                    el.textContent = el.template.replace(`{${propertyName}}`, variableObj[propertyName]);
+                    if (el.parentElement.hasAttribute('unsafe-html')) {
+                        el.parentElement.addClass('has-binded');
+                        el.parentElement.innerHTML = variableObj[propertyName];
+                    } else {
+                        el.textContent = el.template.replace(`{${propertyName}}`, variableObj[propertyName]);
+                    }
                 }
             }
             const registResult = Object.defineProperty(variableObj, propertyName, {
@@ -577,9 +630,10 @@ export const Render = {
 
                     variableObj[`_${propertyName}`] = newValue;
                     const components = Render._getBindingComponent(variableObj, propertyName);
+
                     if (components) {
                         for (let i = 0; i < components.length; i++) {
-                            components[i].ref.variable[propertyName] = newValue;
+                            components[i].ref.variable[components[i].variableName] = newValue;
                         }
                     }
                 },
@@ -599,7 +653,7 @@ export const Render = {
     },
     _getComponentInfo: (tagName) => {
         const componentName = tagName.replace(/component-/gi, '');
-        const componentUrl = `/components/${componentName}/${componentName}.component.js`;
+        const componentUrl = `${APP_CONFIG.FRONT_END_PREFIX}/components/${componentName}/${componentName}.component.js`;
         const arrayComponentName = componentName.split('-');
         for (let i = 0; i < arrayComponentName.length; i++) {
             arrayComponentName[i] = arrayComponentName[i].substring(0, 1).toUpperCase() + arrayComponentName[i].substring(1);
