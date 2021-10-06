@@ -3,3 +3,4 @@ uploads/
 secret.json
 ssl/
 *.css
+package-lock.json
