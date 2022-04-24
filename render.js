@@ -4,7 +4,9 @@ import {
 import { APP_CONFIG } from '../config.js';
 export const Render = {
     renderComponentAsync: async (elHTML, pageVariable, args, controller) => {
-        elHTML.querySelectorAll('*').forEach(async (el) => {
+        const elements = elHTML.querySelectorAll('*');
+        for (let i = 0; i < elements.length; i++) {
+            const el = elements[i];
             if (el && el.tagName.toLowerCase().indexOf('component-') !== -1) {
                 const componentInfo = Render._getComponentInfo(el.tagName.toLowerCase());
                 const varKeys = el.getAttribute('variable') ? el.getAttribute('variable').split(',') : [];
@@ -38,7 +40,7 @@ export const Render = {
                     }
                     const attrValue = el.getAttribute(attrName);
                     const attrPrefix = attrName.substring(0, attrName.indexOf('-'));
-                    const variableNameInComponent = Render.sankeToCamel(attrName.replace(/bind\-/gi, '').replace(/attr\-/gi, ''));
+                    const variableNameInComponent = Render.sankeToCamel(attrName.replace(/bind-/gi, '').replace(/attr-/gi, ''));
 
                     if (attrPrefix === 'bind') {
                         let value = pageVariable[attrValue] || '';
@@ -91,11 +93,11 @@ export const Render = {
                     await componentInstance.postRender();
                 }
             }
-        });
+        }
     },
-    bindingVariableToDom: (controller, elRoot, variable, args) => {
-        Render._renderSwimFor(elRoot, variable, controller, args);
-        Render._bindingVariableAndWatch(elRoot, variable);
+    bindingVariableToDom: (controller, elRoot, variable, args, computed) => {
+        Render._renderSwimFor(elRoot, variable, controller, args, computed);
+        Render._bindingVariableAndWatch(elRoot, variable, computed);
     },
     registElementToVariable (variable, propertyName, element, type, originalTemplate) {
         const variableBindingElementsKey = Render._getBindingElementsKey(propertyName);
@@ -193,7 +195,7 @@ export const Render = {
             return linkTagString.substring(hrefEqualEndPos + 1, hrefBlankStartPos);
         }
     },
-    _renderSwimFor: (elRoot, variable, controller, args) => {
+    _renderSwimFor: (elRoot, variable, controller, args, computed) => {
         for (const propertyName in variable) {
             if (!Array.isArray(variable[propertyName])) {
                 continue;
@@ -203,7 +205,7 @@ export const Render = {
                 loopRenderContainers.push(elContainer);
                 const swimForAttribute = elContainer.getAttribute('swim-for');
                 const nextLevelKey = swimForAttribute.indexOf(` in ${propertyName}`) !== -1 ? swimForAttribute.replace(` in ${propertyName}`, '') : null;
-                Render._renderSwimForMain(elContainer, variable[propertyName], controller, args, nextLevelKey);
+                Render._renderSwimForMain(elContainer, variable[propertyName], controller, args, nextLevelKey, computed);
             });
 
             let timer = null;
@@ -215,8 +217,8 @@ export const Render = {
                         for (let i = 0; i < loopRenderContainers.length; i++) {
                             const swimForAttribute = loopRenderContainers[0].getAttribute('swim-for');
                             const nextLevelKey = swimForAttribute.indexOf(` in ${propertyName}`) !== -1 ? swimForAttribute.replace(` in ${propertyName}`, '') : null;
-                            Render._renderSwimForMain(loopRenderContainers[i], variable[propertyName], controller, args, nextLevelKey);
-                            Render.bindingVariableToDom(controller, loopRenderContainers[i], variable, args);
+                            Render._renderSwimForMain(loopRenderContainers[i], variable[propertyName], controller, args, nextLevelKey, computed);
+                            Render.bindingVariableToDom(controller, loopRenderContainers[i], variable, args, computed);
                             Render.bindingEvent(loopRenderContainers[i], controller);
                             await Render.renderComponentAsync(loopRenderContainers[i], variable, args, controller);
                         }
@@ -231,8 +233,8 @@ export const Render = {
                         for (let i = 0; i < loopRenderContainers.length; i++) {
                             const swimForAttribute = loopRenderContainers[0].getAttribute('swim-for');
                             const nextLevelKey = swimForAttribute.indexOf(` in ${propertyName}`) !== -1 ? swimForAttribute.replace(` in ${propertyName}`, '') : null;
-                            Render._renderSwimForMain(loopRenderContainers[i], variable[propertyName], controller, args, nextLevelKey);
-                            Render.bindingVariableToDom(controller, loopRenderContainers[i], variable, args);
+                            Render._renderSwimForMain(loopRenderContainers[i], variable[propertyName], controller, args, nextLevelKey, computed);
+                            Render.bindingVariableToDom(controller, loopRenderContainers[i], variable, args, computed);
                             Render.bindingEvent(loopRenderContainers[i], controller);
                             await Render.renderComponentAsync(loopRenderContainers[i], variable, args, controller);
                         }
@@ -247,8 +249,8 @@ export const Render = {
                         for (let i = 0; i < loopRenderContainers.length; i++) {
                             const swimForAttribute = loopRenderContainers[0].getAttribute('swim-for');
                             const nextLevelKey = swimForAttribute.indexOf(` in ${propertyName}`) !== -1 ? swimForAttribute.replace(` in ${propertyName}`, '') : null;
-                            Render._renderSwimForMain(loopRenderContainers[i], variable[propertyName], controller, args, nextLevelKey);
-                            Render.bindingVariableToDom(controller, loopRenderContainers[i], variable, args);
+                            Render._renderSwimForMain(loopRenderContainers[i], variable[propertyName], controller, args, nextLevelKey, computed);
+                            Render.bindingVariableToDom(controller, loopRenderContainers[i], variable, args, computed);
                             Render.bindingEvent(loopRenderContainers[i], controller);
                             await Render.renderComponentAsync(loopRenderContainers[i], variable, args, controller);
                         }
@@ -263,8 +265,8 @@ export const Render = {
                         for (let i = 0; i < loopRenderContainers.length; i++) {
                             const swimForAttribute = loopRenderContainers[0].getAttribute('swim-for');
                             const nextLevelKey = swimForAttribute.indexOf(` in ${propertyName}`) !== -1 ? swimForAttribute.replace(` in ${propertyName}`, '') : null;
-                            Render._renderSwimForMain(loopRenderContainers[i], variable[propertyName], controller, args, nextLevelKey);
-                            Render.bindingVariableToDom(controller, loopRenderContainers[i], variable, args);
+                            Render._renderSwimForMain(loopRenderContainers[i], variable[propertyName], controller, args, nextLevelKey, computed);
+                            Render.bindingVariableToDom(controller, loopRenderContainers[i], variable, args, computed);
                             Render.bindingEvent(loopRenderContainers[i], controller);
                             await Render.renderComponentAsync(loopRenderContainers[i], variable, args, controller);
                         }
@@ -274,7 +276,7 @@ export const Render = {
             }
         }
     },
-    _renderSwimForMain: async (elContainer, variable, controller, args, nextLevelKey) => {
+    _renderSwimForMain: async (elContainer, variable, controller, args, nextLevelKey, computed) => {
         if (Array.isArray(variable)) {
             const itemTemplate = elContainer.template || elContainer.innerHTML;
             elContainer.template = itemTemplate;
@@ -282,7 +284,7 @@ export const Render = {
             for (let i = 0; i < variable.length; i++) {
                 const elItem = itemTemplate.toDom();
                 if (nextLevelKey) {
-                    Render._renderSwimForMain(elItem.querySelector(`[swim-for$="in ${nextLevelKey}"]`), variable[i], controller, args);
+                    Render._renderSwimForMain(elItem.querySelector(`[swim-for$="in ${nextLevelKey}"]`), variable[i], controller, args, null, computed);
                 }
                 if (elContainer.getAttribute('swim-for').indexOf(' in ') !== -1) {
                     const variableAs = elContainer.getAttribute('swim-for').split(' in ')[0];
@@ -315,7 +317,7 @@ export const Render = {
                 }
                 variable[i].index = i;
                 variable[i].postiveIndex = i + 1;
-                Render.bindingVariableToDom(controller, elItem, variable[i], args);
+                Render.bindingVariableToDom(controller, elItem, variable[i], args, computed);
                 if (elContainer.tagName === 'SELECT' && elContainer.hasAttribute('value')) {
                     if (elItem.value === elContainer.getAttribute('value')) {
                         elItem.setAttribute('selected', '');
@@ -510,13 +512,76 @@ export const Render = {
             }
         }
     },
-    _bindingVariableAndWatch: (elRoot, variableObj) => {
+    _bindingVariableAndWatch: (elRoot, variableObj, computed) => {
+        const computedFields = computed;
+        for (let i = 0; i < computedFields.length; i++) {
+            variableObj[computedFields[i].variableName] = computedFields[i].value();
+        }
+
         for (const propertyName in variableObj) {
             if (propertyName.indexOf('_') === 0) {
                 continue;
             }
             variableObj[`_${propertyName}`] = variableObj[propertyName];
+            variableObj[propertyName] = variableObj[`_${propertyName}`];
+            const registResult = Object.defineProperty(variableObj, propertyName, {
+                // refactor: debounce set
+                set: (newValue) => {
+                    const bindingElements = Render._getBindingElements(variableObj, propertyName);
+                    if (bindingElements) {
+                        for (let i = 0; i < bindingElements.length; i++) {
+                            if (bindingElements[i].type === 'select') {
+                                bindingElements[i].ref.value = newValue;
+                            } else if (bindingElements[i].type === 'no-value-attribute') {
+                                bindingElements[i].ref.removeAttribute(variableObj[propertyName]);
+                                if (newValue) {
+                                    bindingElements[i].ref.setAttribute(newValue, '');
+                                }
+                            } else if (bindingElements[i].type === 'attribute') {
+                                if (bindingElements[i].ref instanceof Element || bindingElements[i].ref instanceof HTMLDocument) {
+                                    Render._refreshElementAttributeWithVariable(bindingElements[i].ref, propertyName, newValue);
+                                }
+                            } else if (bindingElements[i].type === 'textnode') {
+                                if (variableObj[propertyName] === null || variableObj[propertyName] === undefined) {
+                                    bindingElements[i].ref.textContent = bindingElements[i].ref.template.replace(`{${propertyName}}`, '');
+                                } else {
+                                    bindingElements[i].ref.textContent = bindingElements[i].ref.template.replace(`{${propertyName}}`, newValue);
+                                }
+                            }
+                        }
+                    }
 
+                    variableObj[`_${propertyName}`] = newValue;
+                    const components = Render._getBindingComponent(variableObj, propertyName);
+
+                    const watchComputedFields = computed.filter(item => item.watchKey === propertyName);
+                    for (let i = 0; i < watchComputedFields.length; i++) {
+                        variableObj[watchComputedFields[i].variableName] = watchComputedFields[i].value();
+                    }
+
+                    if (components) {
+                        for (let i = 0; i < components.length; i++) {
+                            components[i].ref.variable[components[i].variableName] = newValue;
+                        }
+                    }
+                },
+                get: () => {
+                    return variableObj[`_${propertyName}`];
+                }
+            });
+
+            if (!window.SwimAppRegisterElements) {
+                window.SwimAppRegisterElements = [];
+            }
+            window.SwimAppRegisterElements.push({
+                className: elRoot.className,
+                propertyName,
+                ref: registResult
+            });
+        }
+
+        // first time replace html;
+        for (const propertyName in variableObj) {
             // attribute
             let query = document.evaluate(`//*[@*[contains(.,'{${propertyName}}')] or attribute::*[contains(local-name(), '{${propertyName.toLowerCase()}}')]]`, elRoot, null, XPathResult.ANY_TYPE, null);
             const elementsWithAttribute = [];
@@ -530,6 +595,7 @@ export const Render = {
             for (let i = 0; i < elementsWithAttribute.length; i++) {
                 const element = elementsWithAttribute[i];
                 const attrNames = element.getAttributeNames();
+
                 for (let j = 0; j < attrNames.length; j++) {
                     const attrName = attrNames[j];
                     const attrValue = element.getAttribute(attrName);
@@ -561,7 +627,6 @@ export const Render = {
                         if (!element.bindingAttributes[attrName]) {
                             element.bindingAttributes[attrName] = {};
                         }
-
                         if (variableObj[propertyName] === null || variableObj[propertyName] === undefined) {
                             element.setAttribute(attrName, element.getAttribute(attrName).replace(`{${propertyName}}`, ''));
                             element.bindingAttributes[attrName][propertyName] = '';
@@ -601,54 +666,6 @@ export const Render = {
                     }
                 }
             }
-            const registResult = Object.defineProperty(variableObj, propertyName, {
-                // refactor: debounce set
-                set: function (newValue) {
-                    const bindingElements = Render._getBindingElements(variableObj, propertyName);
-                    if (bindingElements) {
-                        for (let i = 0; i < bindingElements.length; i++) {
-                            if (bindingElements[i].type === 'select') {
-                                bindingElements[i].ref.value = newValue;
-                            } else if (bindingElements[i].type === 'no-value-attribute') {
-                                bindingElements[i].ref.removeAttribute(variableObj[propertyName]);
-                                if (newValue) {
-                                    bindingElements[i].ref.setAttribute(newValue, '');
-                                }
-                            } else if (bindingElements[i].type === 'attribute') {
-                                if (bindingElements[i].ref instanceof Element || bindingElements[i].ref instanceof HTMLDocument) {
-                                    Render._refreshElementAttributeWithVariable(bindingElements[i].ref, propertyName, newValue);
-                                }
-                            } else if (bindingElements[i].type === 'textnode') {
-                                if (variableObj[propertyName] === null || variableObj[propertyName] === undefined) {
-                                    bindingElements[i].ref.textContent = bindingElements[i].ref.template.replace(`{${propertyName}}`, '');
-                                } else {
-                                    bindingElements[i].ref.textContent = bindingElements[i].ref.template.replace(`{${propertyName}}`, newValue);
-                                }
-                            }
-                        }
-                    }
-
-                    variableObj[`_${propertyName}`] = newValue;
-                    const components = Render._getBindingComponent(variableObj, propertyName);
-
-                    if (components) {
-                        for (let i = 0; i < components.length; i++) {
-                            components[i].ref.variable[components[i].variableName] = newValue;
-                        }
-                    }
-                },
-                get: function () {
-                    return variableObj[`_${propertyName}`];
-                }
-            });
-            if (!window.SwimAppRegisterElements) {
-                window.SwimAppRegisterElements = [];
-            }
-            window.SwimAppRegisterElements.push({
-                className: elRoot.className,
-                propertyName,
-                ref: registResult
-            });
         }
     },
     _getComponentInfo: (tagName) => {

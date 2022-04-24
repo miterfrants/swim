@@ -2,7 +2,7 @@ const fs = require('fs-extra');
 
 fs.copyFileSync(`./src/config.${process.env.NODE_ENV}.js`, './src/config.js');
 
-if(process.env.FORCE_UPDATE!=='true'){
+if(process.env.FORCE_UPDATE !== 'true'){
     if(fs.existsSync('./src/swim/cacher.js')){
         return;
     }
@@ -15,8 +15,8 @@ const components = fs.readdirSync('./src/components', {
 });
 
 const template = fs.readdirSync('./src/template');
-const css = fs.readdirSync('./src/css').filter(filename => filename.endsWith('.css'));
-const scss = fs.readdirSync('./src/css').filter(filename => filename.endsWith('.scss'));
+const css = process.env.SKIP_CSS ? [] : fs.readdirSync('./src/css').filter(filename => filename.endsWith('.css'));
+const scss = process.env.SKIP_SCSS ? [] : fs.readdirSync('./src/css').filter(filename => filename.endsWith('.scss'));
 
 const componentTemplate = `import {
     {ComponentCamelCaseName}Component

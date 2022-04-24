@@ -9,6 +9,7 @@ import {
 import {
     Render
 } from './render.js';
+import { Swissknife } from '../util/swissknife.js';
 
 window.SwimAppController = [];
 window.SwimAppControllersAndArgsMapping = {};
@@ -18,6 +19,7 @@ window.SwimAppPreviousState = [];
 
 export const Router = {
     pauseRouting: false,
+    interrupt: null,
     init: (context) => {
         window.addEventListener('popstate', async () => {
             if (Router.pauseRouting) {
@@ -43,6 +45,9 @@ export const Router = {
                 if (exitResult) {
                     window.SwimAppPreviousState = newPath;
                     Router.routing(location.pathname + location.search, newPath, RoutingRule, context);
+                    if (Router.interrupt) {
+                        Router.interrupt();
+                    }
                     return original.apply(this, arguments);
                 }
             };
@@ -85,12 +90,13 @@ export const Router = {
         });
 
         function overWriteLinkBehavior (e) {
-            var isMacLike = /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform);
-            var isIOS = /(iPhone|iPod|iPad)/i.test(navigator.platform);
-            var isWin = /(win32)/i.test(navigator.platform);
+            const isMacLike = /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform);
+            const isIOS = /(iPhone|iPod|iPad)/i.test(navigator.platform);
+            const isWin = /(win32)/i.test(navigator.platform);
             if (e.currentTarget.target === '_blank' ||
                 ((isMacLike || isIOS) && e.metaKey === true) ||
-                ((isWin) && e.ctrlKey === true)
+                ((isWin) && e.ctrlKey === true) ||
+                e.currentTarget.hasAttribute('not-in-app')
             ) {
                 return;
             }
@@ -149,19 +155,27 @@ export const Router = {
         const previousRoutingPathArray = Router.getRoutingPathArray(previousPath, routers);
 
         // should be enter controller
-        let firstTimeDiffIndex = -1;
-        const differenceRoutinPathFromCurrent = currentRoutingPathArray.filter((routingPath, index) => {
-            if (firstTimeDiffIndex !== -1 && index > firstTimeDiffIndex) {
-                return true;
-            }
-            for (let i = 0; i < previousRoutingPathArray.length; i++) {
-                if (routingPath.fullPath === previousRoutingPathArray[i].fullPath) {
-                    return false;
+        let currentIndex = 0;
+        let previousIndex = 0;
+        const differenceRoutinPathFromCurrent = [];
+
+        if (previousRoutingPathArray.length > 0) {
+            while (
+                currentIndex < currentRoutingPathArray.length &&
+                previousIndex < previousRoutingPathArray.length
+            ) {
+                if (previousRoutingPathArray[previousIndex].fullPath !== currentRoutingPathArray[currentIndex].fullPath) { // 發現不一樣就把所有後面的 path push 到 diff 裡頭
+                    break;
                 }
+                currentIndex = currentIndex + 1;
+                previousIndex = previousIndex + 1;
             }
-            firstTimeDiffIndex = index;
-            return true;
-        });
+        }
+
+        for (let i = currentIndex; i < currentRoutingPathArray.length; i++) {
+            differenceRoutinPathFromCurrent.push(currentRoutingPathArray[i]);
+        }
+
         // edge case: child routing rule to parent routing rule
         if (
             differenceRoutinPathFromCurrent.length === 0 &&
@@ -247,7 +261,7 @@ export const Router = {
                 firstHTMLExistsController = window.SwimAppController[cursorIndex];
             }
             const elContainer = firstHTMLExistsController.elShadowHTML.parentElement;
-            var child = elContainer.lastElementChild;
+            let child = elContainer.lastElementChild;
             while (child) {
                 elContainer.removeChild(child);
                 child = elContainer.lastElementChild;
@@ -277,10 +291,10 @@ export const Router = {
     // server side: constructor -> render
     // client side first time: constructor -> enter -> render -> postRender -> exit
     // client side seconds time: enter -> render -> postRender -> exit
-    executeController: async (controller, context, htmlPath, parentController, skipControllerLiveTimeCycle) => {
+    executeController: async (Controller, context, htmlPath, parentController, skipControllerLiveTimeCycle) => {
         // 如果已經有 instance 就不要在執行 initalize
         const instances = window.SwimAppController.filter((instance) => {
-            return instance instanceof controller;
+            return instance instanceof Controller;
         });
 
         let controllerInstance = null;
@@ -292,7 +306,7 @@ export const Router = {
                 html = Render.appendStylesheetToHeadAndRemoveLoaded(html);
                 elHTML = html.toDom();
             }
-            controllerInstance = new controller(elHTML, parentController, context.args, context);
+            controllerInstance = new Controller(elHTML, parentController, context.args, context);
             window.SwimAppController.push(controllerInstance);
         } else {
             controllerInstance = instances[0];
@@ -427,10 +441,34 @@ function setupContextArgs (argsReference, args, controllerId, isVariableFromUri)
         window.SwimAppControllersAndArgsMapping[controllerId] = [];
     }
     for (const key in args) {
-        if (isVariableFromUri) {
-            argsReference[key] = decodeURIComponent(args[key]);
-        } else {
+        if (typeof args[key] === 'object' || typeof args[key] === 'function') {
             argsReference[key] = args[key];
+            continue;
+        }
+
+        if (isVariableFromUri) {
+            argsReference[`_${key}`] = decodeURIComponent(args[key]);
+        } else {
+            argsReference[`_${key}`] = args[key];
+        }
+
+        if (argsReference[`${key}`] === undefined && argsReference[`_${key}`] !== undefined) {
+            Object.defineProperty(argsReference, key, {
+                set: (newValue) => {
+                    argsReference[`_${key}`] = newValue;
+
+                    document.body.dispatchEvent(new CustomEvent(`CONTEXT_${Swissknife.CamelToUnderscoreSnake(key).toUpperCase()}_CHANGED`, {
+                        bubbles: true,
+                        detail: {
+                            newValue: newValue
+                        }
+                    }));
+                },
+                get: () => {
+                    return argsReference[`_${key}`];
+                },
+                configurable: true
+            });
         }
 
         if (window.SwimAppControllersAndArgsMapping[controllerId].indexOf(key) === -1) {
