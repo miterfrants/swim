@@ -39,7 +39,7 @@
     "string-replace-loader": "^3.0.3",
     "webpack": "^5.57.1",
     "webpack-cli": "^4.8.0",
-    "webpack-remove-empty-scripts": "github:webdiscus/webpack-remove-empty-scripts"
+    "webpack-remove-empty-scripts": "^1.0.4"
   },
   "deprecated": false,
   "description": "1. `npm install https://github.com/miterfrants/swim.git` 2. `node node_modules/swim/auto-script/generate-project-structure.js`",
